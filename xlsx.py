@@ -93,6 +93,11 @@ class Feuille:
         # [(plage, [valeurs])] : listes deroulantes. La plage est une sqref
         # Excel, donc peut enumerer plusieurs cellules separees d'un espace.
         self.listes = []
+        # [(plage, formule | None, titre, message)] : controles de saisie
+        # personnalises, en mode AVERTISSEMENT (la saisie reste possible apres
+        # confirmation). formule None = message d'aide seul, sans controle.
+        # La formule est relative a la cellule en haut a gauche de la plage.
+        self.controles = []
         # [(plage, dxf, formule)] : mise en forme conditionnelle de type
         # « expression ». La formule est relative a la cellule en haut a gauche
         # de la plage -- d'ou une seule plage contigue par regle.
@@ -132,10 +137,10 @@ class Feuille:
         out.append('<sheetViews><sheetView%s workbookViewId="0">'
                    % ("" if self.quadrillage else ' showGridLines="0"'))
         if self.fige_entete and self.fige_colonnes:
-            n = self.fige_colonnes
-            out.append('<pane xSplit="%d" ySplit="1" topLeftCell="%s2" '
+            n, m = self.fige_colonnes, self.lignes_figees
+            out.append('<pane xSplit="%d" ySplit="%d" topLeftCell="%s%d" '
                        'activePane="bottomRight" state="frozen"/>'
-                       % (n, col_lettre(n + 1)))
+                       % (n, m, col_lettre(n + 1), m + 1))
         elif self.fige_entete:
             n = self.lignes_figees
             out.append('<pane ySplit="%d" topLeftCell="A%d" '
@@ -208,14 +213,31 @@ class Feuille:
                        % (plage, dxf, prio, esc(formule)))
         # dataValidations : apres autoFilter, avant la queue d'impression.
         listes = [(plage, v) for plage, v in self.listes if plage]
-        if listes:
-            out.append('<dataValidations count="%d">' % len(listes))
+        controles = [c for c in self.controles if c[0]]
+        if listes or controles:
+            out.append('<dataValidations count="%d">'
+                       % (len(listes) + len(controles)))
             for plage, valeurs in listes:
                 out.append('<dataValidation type="list" allowBlank="1" '
                            'showInputMessage="1" showErrorMessage="1" '
                            'sqref="%s"><formula1>%s</formula1>'
                            '</dataValidation>'
                            % (plage, esc('"%s"' % ",".join(valeurs))))
+            for plage, formule, titre, message in controles:
+                # Titre : 32 caracteres max ; message : 255 (limites Excel).
+                aide = (' promptTitle="%s" prompt="%s"'
+                        % (esc(titre[:32]), esc(message[:255])))
+                if formule is None:
+                    out.append('<dataValidation allowBlank="1" '
+                               'showInputMessage="1"%s sqref="%s"/>'
+                               % (aide, plage))
+                    continue
+                out.append('<dataValidation type="custom" errorStyle="warning" '
+                           'allowBlank="1" showInputMessage="1" '
+                           'showErrorMessage="1"%s errorTitle="%s" error="%s" '
+                           'sqref="%s"><formula1>%s</formula1></dataValidation>'
+                           % (aide, esc(titre[:32]), esc(message[:255]), plage,
+                              esc(formule)))
             out.append("</dataValidations>")
         out.append(self.queue_xml if self.queue_xml else
                    '<pageMargins left="0.7" right="0.7" top="0.75" '

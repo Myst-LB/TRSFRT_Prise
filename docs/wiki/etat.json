@@ -4,7 +4,7 @@
   "docs_wiki": "3.4.0",
   "derniere_session": "2026-11-16",
   "a_valider": 3,
-  "etapes_ouvertes": 3,
+  "etapes_ouvertes": 4,
   "attention": 0,
   "parties": 6,
   "titres": [
@@ -127,6 +127,11 @@
       "niveau": 2,
       "id": "présentation-empruntée-au-gabarit",
       "texte": "Présentation empruntée au gabarit"
+    },
+    {
+      "niveau": 2,
+      "id": "optimisations-de-laudit-2026-11-16",
+      "texte": "Optimisations de l'audit (2026-11-16)"
     },
     {
       "niveau": 2,

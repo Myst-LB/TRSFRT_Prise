@@ -134,6 +134,10 @@ CHG_P = _chg_lookup("c_cab_comm")
 # la ligne « description » (au lieu de <Local>_P<Nouv. Prise>) -- pour une
 # nomenclature particuliere. Vide, rien ne change.
 #
+# Ligne « description » = celle qui COMMENCE par « description » (estDesc).
+# Chercher le mot n'importe ou dans la ligne ecrasait aussi « macro
+# description ... » (smartports Cisco) et toute ligne qui le contient.
+#
 # « New Config » -- reecrit le bloc : renomme l'interface (Nouv. Interface) et
 # reconstruit la ligne « description <LOCAL>_P<NNNN> » a partir de Local et
 # Nouv. Prise. ARRAY
@@ -146,8 +150,9 @@ CHG_N = '''_xlfn.LET(
         {{"GigabitEthernet";"TenGigabitEthernet";"TwoGigabitEthernet";"TwentyFiveGigE";"FastEthernet";"Port-channel";"AppGigabitEthernet";"HundredGigE";"FortyGigabitEthernet"}},
         _xlpm.abr))),
   _xlpm.lignesInt, IF(OR({c_nvint}{r}="",{c_nvint}{r}=0), _xlpm.lignes, _xlfn.VSTACK("interface " & _xlpm.long & MID({c_nvint}{r}, LEN(_xlpm.abr)+1, 50), _xlfn.DROP(_xlpm.lignes, 1))),
-  _xlpm.posD, IFERROR(MATCH(TRUE, ISNUMBER(SEARCH(" description ", _xlpm.lignesInt)), 0), NA()),
-  _xlpm.ancienne, IF(ISNA(_xlpm.posD), "", TRIM(SUBSTITUTE(INDEX(_xlpm.lignesInt, _xlpm.posD), " description ", ""))),
+  _xlpm.estDesc, LEFT(TRIM(_xlpm.lignesInt), 12)="description ",
+  _xlpm.posD, IFERROR(MATCH(TRUE, _xlpm.estDesc, 0), NA()),
+  _xlpm.ancienne, IF(ISNA(_xlpm.posD), "", TRIM(MID(TRIM(INDEX(_xlpm.lignesInt, _xlpm.posD)), 13, 999))),
   _xlpm.posP, IFERROR(SEARCH("_P", _xlpm.ancienne), NA()),
   _xlpm.vieuxLocal, IF(ISNA(_xlpm.posP), _xlpm.ancienne, LEFT(_xlpm.ancienne, _xlpm.posP-1)),
   _xlpm.vieuxNum, IF(ISNA(_xlpm.posP), "", MID(_xlpm.ancienne, _xlpm.posP+1, 50)),
@@ -156,7 +161,7 @@ CHG_N = '''_xlfn.LET(
   _xlpm.partNum, IF(_xlpm.np<>"", "P" & IFERROR(TEXT(VALUE(_xlpm.np), "0000"), IFERROR(TEXT(VALUE(LEFT(_xlpm.np, LEN(_xlpm.np)-1)), "000") & UPPER(RIGHT(_xlpm.np, 1)), _xlpm.np)), _xlpm.vieuxNum),
   _xlpm.sep, IF(AND(_xlpm.partLocal<>"", _xlpm.partNum<>""), "_", ""),
   _xlpm.desctxt, " description " & IF({c_override}{r}<>"", TRIM({c_override}{r}), _xlpm.partLocal & _xlpm.sep & _xlpm.partNum),
-  _xlpm.lignesMaj, IF(ISNUMBER(SEARCH("description", _xlpm.lignesInt)), _xlpm.desctxt, _xlpm.lignesInt),
+  _xlpm.lignesMaj, IF(_xlpm.estDesc, _xlpm.desctxt, _xlpm.lignesInt),
   _xlpm.avecDesc, IF(OR({c_local}{r}<>"", {c_nvprise}{r}<>"", {c_override}{r}<>""),
       IF(ISNA(_xlpm.posD), _xlfn.VSTACK(_xlfn.TAKE(_xlpm.lignesMaj,1), _xlpm.desctxt, _xlfn.DROP(_xlpm.lignesMaj,1)), _xlpm.lignesMaj),
       _xlpm.lignesInt),

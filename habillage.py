@@ -83,6 +83,7 @@ A_VERIFIER = "FF2E5DA8"      # bleu : a controler sur place
 A_FAIRE = "FFC65911"         # orange : planifie, reste a executer
 NE_PAS_FAIRE = "FF999999"
 ALERTE = "FFAA3333"         # DOUBLON, HORS GABARIT
+MODIFIE = "FFC6EFCE"      # vert franc : New Config qui change le port
 
 
 def _police(taille=11, gras=False, couleur="FF1A1A1A", nom="Calibri"):
@@ -150,7 +151,7 @@ class Habillage:
       cab_entete / cab_donnee / chg_entete / chg_donnee : {en-tete: index xf}
       groupe, separateur : index xf des lignes « Local technique » et
                            « — HORS GABARIT — »
-      dxf_a_saisir, dxf_fait, dxf_a_faire, dxf_a_prog, dxf_a_desactiver, dxf_a_verifier, dxf_ne_pas_faire, dxf_alerte : index dxf
+      dxf_a_saisir, dxf_fait, dxf_a_faire, dxf_a_prog, dxf_a_desactiver, dxf_a_verifier, dxf_ne_pas_faire, dxf_alerte, dxf_modifie : index dxf
       styles_xml : le styles.xml complete
     """
 
@@ -228,6 +229,10 @@ class Habillage:
                                      '</dxf>' % NE_PAS_FAIRE)
         self.dxf_alerte = dxfs('<dxf><font><b/><color rgb="%s"/></font></dxf>'
                                % ALERTE)
+        # New Config differente de Config : ce que le transfert va changer.
+        self.dxf_modifie = dxfs('<dxf><font><b/></font><fill><patternFill '
+                                'patternType="solid"><bgColor rgb="%s"/>'
+                                '</patternFill></fill></dxf>' % MODIFIE)
 
         # Feuille IMPRESSION. Meme code couleur que CABLAGE (bleu = existant,
         # vert = a brancher), double trait entre les deux blocs.

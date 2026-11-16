@@ -29,7 +29,7 @@ règles métier, partie 4 = développement). Pas de plan ni de passation sépar�
 ## Branche et livraison
 
 - Branche : celle que fixe la session ; sinon une branche par sujet, fusion dans `main`.
-- Tests : `python -m unittest discover -s tests -v` → compter (21 tests, 21 passés, 0 sauté au 2026-11-16).
+- Tests : `python -m unittest discover -s tests -v` → compter (27 tests, 27 passés, 0 sauté au 2026-11-16).
 - Bilan des tests dans chaque message de commit ; wiki régénéré (`python docs/wiki/gen.py`, zéro « ATTENTION »).
 
 ## Compléments des skills
@@ -53,6 +53,8 @@ Détail et raisons : wiki partie 4.
 - Table d'abréviations en deux copies (Python / formules) : les modifier ensemble.
 - Références de feuille **en dur**, jamais d'`INDIRECT` ; noms d'onglets assainis (31 car., parenthèse retirée).
 - Toutes les cellules sont émises, même vides (le quadrillage vient des styles) : `resume()` teste `.valeur`.
+- L'équipe **trie et filtre** CÂBLAGE : aucune formule ne doit dépendre de la position d'une ligne (pas de
+  référence directe à « la ligne du port »), et pas de protection qui bloquerait le tri.
 - Règle POE = consigne de brassage (`NON-POE` / `POE` / `POE+`) : pas d'état « inconnu » (wiki 3, « La colonne POE »).
 
 ## Prochaines étapes
@@ -60,7 +62,8 @@ Détail et raisons : wiki partie 4.
 (Même liste que la partie 6 du wiki : mettre à jour les deux.)
 
 - [ ] Vérification croisée des références de feuille dans `tests/test_generation.py` (paire piégeuse `…-6984` / `…-6984A` en fictif).
-- [ ] Ouvrir un classeur produit dans Excel M365 : colonne POE, impression de CÂBLAGE avec les nouvelles largeurs.
+- [ ] Ouvrir un classeur produit dans Excel M365 : colonne POE, aperçu d'impression de CÂBLAGE (échelle 69 %, sauts par local), contrôles de saisie, mises en forme.
+- [ ] Décider : protection des cellules à formule (incompatible avec un tri qui touche une cellule verrouillée), nom défini `LAMBDA`, mesure de `ca="1"`.
 - [ ] Ajouter le projet à `Hub/projets.json` (dépôt `Myst-LB/Hub`).
 
 <!-- docs-wiki -->

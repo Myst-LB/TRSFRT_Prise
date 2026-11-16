@@ -43,6 +43,8 @@ le classeur.
 | Les doublons de prise sont gardés et se nomment l'un l'autre | Écarter le second faisait disparaître un port réel du plan | antérieure |
 | Colonne POE en trois valeurs : `NON-POE` / `POE` / `POE+` (remplace `POE` / `POE (AP)`) | Brancher un AP ou un équipement de classe 4 sur un port PoE classique le prive de puissance en pointe | 2026-11-16 |
 | Largeurs de colonnes déclarées par nom d'en-tête | Les tables par numéro ne suivaient plus les colonnes insérées | 2026-11-16 |
+| Audit d'optimisation : impression, `New Config`, contrôles de saisie, mises en forme, volets (sans toucher à la structure) | Voir « Optimisations de l'audit » (partie 4) | 2026-11-16 |
+| Pas de référence directe à la ligne de CÂBLAGE à la place des recherches (gain de recalcul) | L'équipe **trie** CÂBLAGE : une référence directe pointerait alors un autre port | 2026-11-16 |
 
 ## Vue d'ensemble
 
@@ -205,8 +207,16 @@ La planification se saisit **dans CÂBLAGE** ; Changements la relit.
 > l'avancement ; ce que le script signale va en `Commentaire`.
 
 Présentation : bleu = existant, vert = nouveau, gris = suivi ; case de planification vide sur une ligne de prise en
-jaune ; `Fait` en vert gras, `Ne pas faire` en gris italique, `DOUBLON` / `HORS GABARIT` en rouge. Lignes de 26 pt
-pour annoter au crayon ; un bandeau et un saut de page par local technique.
+jaune (sauf sur les lignes `Ne pas faire` et `À désactiver`) ; `Fait` en vert gras, `Ne pas faire` en gris italique,
+`DOUBLON` / `HORS GABARIT` et POE `N/C` en rouge. Lignes de 26 pt pour annoter au crayon ; un bandeau et un saut de
+page par local technique. Les colonnes `Local Switch`, `Anc. Switch` et `Interface` restent figées à gauche.
+
+**Contrôles de saisie** (avertissement : on peut passer outre après confirmation) :
+
+- `Nouv. Interface` : doit commencer par un abrégé connu (`Gi`, `Te`, `Tw`, `Fa`, `Po`, `Ap`, `Hu`, `Fo`, ou le
+  nom long) ou par un chiffre. `Gx1/0/5` déclenche l'avertissement au lieu de produire `interface Gx1/0/5`.
+- `Nouv. Prise` : 4 caractères au plus (`643`, `0643`, `6B`).
+- `Nouv. Locale`, `Nouv. Switch` : message d'aide seul.
 
 ## La feuille Changements All Switch
 
@@ -218,6 +228,8 @@ Description override | New Config | État | Commentaire`
   caractères après le `P` : `P0643`, `P006B`). `Description override` rempli remplace ce texte.
 - `État` = `À désactiver` : `New Config` devient `default interface <X>`.
 - `Nouv. Interface`, `Local`, `Nouv. Prise`, `État`, `Commentaire` sont relus dans CÂBLAGE par port.
+- `New Config` en vert franc gras quand il diffère de `Config` (ce que le transfert va changer) ; `Config` en rouge
+  quand il affiche « interface introuvable ».
 
 ## La colonne POE : quel port prévoir
 
@@ -339,6 +351,35 @@ styles de colonne), `<sheetPr>`, mise en page. Écartés exprès : `<sheetProtec
 **en fin** de liste : aucun index existant ne bouge. Le quadrillage vient des bordures des styles : toutes les
 cellules sont émises, même vides (`xlsx.vide`).
 
+## Optimisations de l'audit (2026-11-16)
+
+Audit en lecture seule du classeur produit (projet fictif de 384 prises : 189 Ko, aucune fonction volatile). Appliqué
+sans changer la structure :
+
+| Point | Avant | Après |
+| --- | --- | --- |
+| Impression de CÂBLAGE | `<pageSetUpPr fitToPage="1"/>` hérité du gabarit : « Ajuster à une page » annulait l'échelle 69 % et les sauts par local | retiré (`sans_ajuster()`) |
+| `New Config` | toute ligne contenant « description » était remplacée (`macro description …` compris) | seule la ligne qui **commence** par `description ` |
+| Lignes `interface` | espaces de fin : Python trouvait le port, Excel affichait « interface introuvable » | espaces de fin retirés dans la feuille de config |
+| Mises en forme | jaune même sur `Ne pas faire` ; plage `A3:A20000` en dur dans `Config à copier` | exclusions, `N/C` / introuvable en rouge, `New Config` modifiée surlignée, colonne entière |
+| Saisie | aucune vérification | contrôles en avertissement (`controles_saisie()`, abrégés tirés de `analyse.ABREGES`) |
+| Volets | seule la ligne 1 figée dans CÂBLAGE | + colonnes jusqu'à `Interface` |
+
+**Écarté** : référence directe à la ligne de CÂBLAGE au lieu des `XLOOKUP` de Changements et de la formule POE. C'est
+le plus gros gain de recalcul estimé (non mesuré), mais un **tri** de CÂBLAGE ferait pointer un autre port.
+
+**Pas encore appliqué** (attend une décision ou une mesure sur M365) : protection des cellules à formule (un tri sur
+une feuille protégée est refusé par Excel dès qu'il touche une cellule verrouillée), table d'abréviations en nom
+défini `LAMBDA`, attribut `ca="1"` des formules.
+
+**Restructurations notées, non faites** : colonne masquée « ligne CÂBLAGE » ; `New Config` découpée en colonnes
+intermédiaires ; feuille « Listes » avec plages nommées ; tableaux structurés et segments ; `IMPRESSION` en une
+seule formule `FILTER`.
+
+**Automatisation** : pas de VBA (ne s'exécute pas dans Excel Online, `.xlsm`, impossible à écrire en bibliothèque
+standard) ; Office Scripts possible pour « Préparer l'impression » (stocké hors du classeur, à autoriser par
+l'administrateur) ; Power Query non pertinent.
+
 ## Recettes d'ajustement
 
 | Je veux… | Fichiers, dans l'ordre | Test |
@@ -356,12 +397,12 @@ cellules sont émises, même vides (`xlsx.vide`).
 python -m unittest discover -s tests -v
 ```
 
-Résultat attendu le 2026-11-16 : **21 tests, 21 passés, 0 sauté**.
+Résultat attendu le 2026-11-16 : **27 tests, 27 passés, 0 sauté**.
 
 | Fichier | Couvre |
 | --- | --- |
 | `tests/test_poe.py` | règle NON-POE / POE / POE+ (cas limites, faux amis), lecture d'un `show power inline` (CRLF, BOM, dossier accentué), parité des abréviations |
-| `tests/test_generation.py` | génération complète d'un projet fictif : feuilles dans l'ordre, largeur de chaque colonne, valeurs POE, section hors gabarit |
+| `tests/test_generation.py` | génération complète d'un projet fictif : feuilles dans l'ordre, largeur de chaque colonne, valeurs POE, section hors gabarit, optimisations de l'audit (impression, `New Config`, espaces de fin, mises en forme, contrôles de saisie, volets) |
 
 Données fictives uniquement (`LAB-0101-9300A`, `LAB-0101-00_P0001`).
 
@@ -371,7 +412,7 @@ Données fictives uniquement (`LAB-0101-9300A`, `LAB-0101-00_P0001`).
   Online le valide.
 - La vérification croisée des références de feuille (chaque formule POE vise les lignes de son switch).
 - Le diff et la restauration `--force`.
-- Le rendu imprimé.
+- Le rendu imprimé, les contrôles de saisie et les mises en forme dans Excel (seul le XML est vérifié).
 
 # 6. Suivi du projet
 
@@ -388,12 +429,16 @@ Données fictives uniquement (`LAB-0101-9300A`, `LAB-0101-00_P0001`).
 - **Testé** : 21 tests passés ; génération sur un projet fictif.
 - **Pas testé** : calcul des formules dans Excel M365 ; rendu imprimé après le changement des largeurs (CÂBLAGE a
   désormais une largeur pour ses 14 colonnes, dont `Description` à 30).
-- **Attend une décision** : points « à valider » de la partie 3 ; propositions de l'audit d'optimisation.
+- **Audit d'optimisation** (même session) : appliqué sans changer la structure (partie 4, « Optimisations de
+  l'audit ») ; 27 tests passés, les 6 nouveaux échouent sur l'ancien code ; XML du classeur bien formé. Référence
+  directe à la ligne écartée parce que l'équipe trie CÂBLAGE.
+- **Attend une décision** : points « à valider » de la partie 3 ; protection des cellules, nom `LAMBDA`, `ca="1"`.
 
 ## Prochaines étapes
 
 - [ ] Vérification croisée des références de feuille dans `tests/test_generation.py` (paire piégeuse `…-6984` / `…-6984A` en fictif).
-- [ ] Ouvrir un classeur produit dans Excel M365 : colonne POE, impression de CÂBLAGE avec les nouvelles largeurs.
+- [ ] Ouvrir un classeur produit dans Excel M365 : colonne POE, aperçu d'impression de CÂBLAGE (échelle 69 %, sauts par local), contrôles de saisie, mises en forme.
+- [ ] Décider : protection des cellules à formule (incompatible avec un tri qui touche une cellule verrouillée), nom défini `LAMBDA`, mesure de `ca="1"`.
 - [ ] Ajouter le projet à `Hub/projets.json` (dépôt `Myst-LB/Hub`).
 
 ## Régénérer ce wiki

@@ -39,6 +39,9 @@ interface GigabitEthernet1/0/4
 interface GigabitEthernet1/0/5
  description Lien vers LAB-0101-9300B
 !
+interface GigabitEthernet1/0/6   
+ description LAB-0101-00_P0006
+!
 end
 """
 
@@ -50,6 +53,7 @@ Gi1/0/2   auto   on         6.5     IP Phone 8845       2     30.0
 Gi1/0/3   auto   on         9.2     Ieee PD             3     30.0
 Gi1/0/4   auto   on         17.6    Ieee PD             4     30.0
 Gi1/0/5   auto   off        0.0     n/a                 n/a   30.0
+Gi1/0/6   auto   off        0.0     n/a                 n/a   30.0
 """
 
 
@@ -132,7 +136,56 @@ class Generation(unittest.TestCase):
                 r'<c r="%s(\d+)"[^>]*t="inlineStr"[^>]*><is><t[^>]*>([^<]*)</t>' % col, xml):
             valeurs[int(ligne)] = texte
         self.assertEqual([valeurs[i] for i in sorted(valeurs)],
-                         ["POE", "NON-POE", "POE", "POE+", "POE+", "NON-POE"])
+                         ["POE", "NON-POE", "POE", "POE+", "POE+", "NON-POE",
+                          "NON-POE"])
+
+    # --- Optimisations de l'audit (2026-11-16), sans changement de structure
+
+    def test_impression_cablage_sans_ajuster_a_la_page(self):
+        # A1 : « Ajuster » annulait l'echelle 69 % et les sauts par local.
+        xml = self.parties()["CÂBLAGE Labo"]
+        self.assertNotIn("fitToPage", xml)
+        self.assertIn('scale="69"', xml)
+
+    def test_new_config_ne_vise_que_la_ligne_description(self):
+        # A3 : plus de recherche du mot n'importe ou dans la ligne.
+        self.assertIn('LEFT(TRIM(_xlpm.lignesInt), 12)="description "', F.CHG_N)
+        self.assertNotIn('SEARCH("description"', F.CHG_N)
+        self.assertNotIn('SEARCH(" description "', F.CHG_N)
+
+    def test_espaces_de_fin_retires_des_lignes_interface(self):
+        # A6 : CHG_J fait un MATCH exact sur « interface X ».
+        xml = self.parties()["LAB-0101-9300A"]
+        self.assertIn(">interface GigabitEthernet1/0/6<", xml)
+        self.assertNotIn("interface GigabitEthernet1/0/6 ", xml)
+
+    def test_mises_en_forme_ajoutees(self):
+        # A5
+        p = self.parties()
+        self.assertIn('=&quot;N/C&quot;', p["CÂBLAGE Labo"])
+        self.assertIn('Ne pas faire', p["CÂBLAGE Labo"].split("conditionalFormatting")[1])
+        chg = p["Changements All Switch"]
+        self.assertIn("interface introuvable", chg)
+        cfg, nv = F.CHG["Config"], F.CHG["New Config"]
+        self.assertIn("$%s2&lt;&gt;$%s2" % (nv, cfg), chg)
+        self.assertIn('sqref="A3:A1048576"', p["Config à copier"])
+
+    def test_controles_de_saisie(self):
+        # A4 : avertissement sur Nouv. Interface et Nouv. Prise, aides ailleurs.
+        xml = self.parties()["CÂBLAGE Labo"]
+        val = re.findall(r'<dataValidation [^>]*sqref="([A-Z]+)3:', xml)
+        for nom in ("Nouv. Interface", "Nouv. Prise", "Nouv. Locale",
+                    "Nouv. Switch", "État"):
+            self.assertIn(F.CAB[nom], val, nom)
+        i = F.CAB["Nouv. Interface"]
+        self.assertIn('LEFT(%s3,2)=&quot;Gi&quot;' % i, xml)
+        self.assertIn('errorStyle="warning"', xml)
+
+    def test_colonnes_figees_jusqu_a_interface(self):
+        # A7
+        xml = self.parties()["CÂBLAGE Labo"]
+        n = F.CAB_ENTETES.index("Interface") + 1
+        self.assertIn('<pane xSplit="%d" ySplit="1"' % n, xml)
 
     def test_hors_gabarit_liste(self):
         self.assertIn("HORS GABARIT", self.parties()["CÂBLAGE Labo"])

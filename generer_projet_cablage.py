@@ -441,7 +441,11 @@ def feuille_cablage(nom_feuille, entrees, reserve, chg_de_switch, modele,
     """
     f = Feuille(nom_feuille,
                 cols_xml=modele.cols_depuis(CAB_COLONNES, CAB_LARGEURS),
-                sheetpr_xml=modele.sheetpr_xml, queue_xml=queue_xml)
+                sheetpr_xml=sans_ajuster(modele.sheetpr_xml),
+                queue_xml=queue_xml,
+                # Local Switch, Anc. Switch et Interface restent visibles
+                # quand on defile vers la planification, a droite.
+                fige_colonnes=F.CAB_ENTETES.index("Interface") + 1)
     f.titres = "$1:$1"
     f.ajouter([txt(e, hab.cab_entete[e]) for e in F.CAB_ENTETES],
               hauteur=HAUTEUR_ENTETE_CAB)
@@ -519,11 +523,20 @@ def feuille_cablage(nom_feuille, entrees, reserve, chg_de_switch, modele,
     # reserve n'ont pas de switch ; la section hors gabarit commence apres
     # `derniere`, donc hors de la plage.
     b = F.CAB["Anc. Switch"]
+    # Pas de jaune sur une ligne « Ne pas faire » ou « À désactiver » : rien
+    # n'y reste a planifier.
+    et = F.CAB["État"]
     for e in F.CAB_ENTETES:
         if habillage.CAB_FAMILLE[e] == "nouv":
             col = F.CAB[e]
             f.mef.append(("%s3:%s%d" % (col, col, derniere), hab.dxf_a_saisir,
-                          'AND($%s3<>"",%s3="")' % (b, col)))
+                          'AND($%s3<>"",%s3="",$%s3<>"Ne pas faire",$%s3<>"%s")'
+                          % (b, col, et, et, ETAT_DESACTIVER)))
+    controles_saisie(f, derniere)
+    # POE « N/C » : le port n'a pas ete trouve dans Changements.
+    p = F.CAB["POE"]
+    f.mef.append(("%s3:%s%d" % (p, p, derniere), hab.dxf_alerte,
+                  '$%s3="N/C"' % p))
 
     if hors_gabarit:
         if sauts:
@@ -554,6 +567,47 @@ def feuille_cablage(nom_feuille, entrees, reserve, chg_de_switch, modele,
     # coupait la plage juste au-dessus des lignes HORS GABARIT : Etat et
     # Commentaire restaient vides pour ces ports dans « Changements All Switch ».
     return f, len(f.lignes)
+
+
+def controles_saisie(f, derniere):
+    """Controles de saisie (avertissement) et aides sur la planification.
+
+    Une faute de frappe ne donnait aucun signal : « Gx1/0/5 » ressortait tel
+    quel dans New Config (« interface Gx1/0/5 »), une prise « 12AB » en
+    « P12AB ». Mode avertissement : on peut passer outre apres confirmation.
+
+    Interface : les 2 premieres lettres sont celles d'un abrege connu (elles
+    couvrent aussi les noms longs : « GigabitEthernet » commence par « Gi »),
+    ou un chiffre (CHG_N met alors GigabitEthernet). La liste vient de
+    analyse.ABREGES : pas de troisieme copie de la table. Excel refuse les
+    constantes matricielles dans une validation, d'ou le OR(...).
+    """
+    def plage(nom):
+        col = F.CAB[nom]
+        return "%s3:%s%d" % (col, col, derniere)
+
+    i = F.CAB["Nouv. Interface"] + "3"
+    prefixes = sorted({abr[:2] for abr, _ in analyse.ABREGES})
+    f.controles.append((
+        plage("Nouv. Interface"),
+        'OR(%s="",ISNUMBER(-LEFT(%s,1)),%s)'
+        % (i, i, ",".join('LEFT(%s,2)="%s"' % (i, p) for p in prefixes)),
+        "Nouvelle interface",
+        "Abrégé + numéro : Gi1/0/5, Te1/1/1, Tw2/0/3... Abrégés reconnus : "
+        + ", ".join(dict.fromkeys(abr for abr, _ in analyse.ABREGES)) + "."))
+    n = F.CAB["Nouv. Prise"] + "3"
+    f.controles.append((
+        plage("Nouv. Prise"), 'OR(%s="",LEN(%s)<=4)' % (n, n),
+        "Nouvelle prise",
+        "4 caractères au plus : 643, 0643 ou 6B (3 chiffres + 1 lettre). "
+        "New Config l'écrit P0643 / P006B."))
+    f.controles.append((
+        plage("Nouv. Locale"), None, "Nouveau local",
+        "Local de la prise, forme habituelle C1-1234-00. Reporté dans la "
+        "description (Local_P0000)."))
+    f.controles.append((
+        plage("Nouv. Switch"), None, "Nouveau switch",
+        "Nom du switch qui reprend la prise (information de planification)."))
 
 
 def largeur(textes, mini=8.0, maxi=40.0):
@@ -639,6 +693,14 @@ def feuille_changements(nom, switchs, cfg_de_switch, cab, dernier_cab, modele,
         r = ajouter_ports(f, sw, cfg_de_switch[sw.nom], cab, dernier_cab,
                           hab, r)
     mef_suivi(f, hab, F.CHG, 2)
+    fin = len(f.lignes)
+    cfg, nv = F.CHG["Config"], F.CHG["New Config"]
+    # Bloc introuvable dans la feuille de config : en rouge.
+    f.mef.append(("%s2:%s%d" % (cfg, cfg, fin), hab.dxf_alerte,
+                  '$%s2="interface introuvable"' % cfg))
+    # New Config differente de Config : ce que le transfert changera.
+    f.mef.append(("%s2:%s%d" % (nv, nv, fin), hab.dxf_modifie,
+                  'AND($%s2<>"",$%s2<>$%s2)' % (nv, nv, cfg)))
     return f
 
 
@@ -725,8 +787,12 @@ def feuille_copie(nom, switchs, chg_de_switch, hab, style_mono):
                                     ETAT_DESACTIVER),
                     array=True, style=style_mono)])
     # Titres de section (« !===== switch ===== ») en bandeau.
-    f.mef.append(("A3:A20000", hab.dxf_section, 'LEFT($A3,6)="!====="'))
-    f.mef.append(("A3:A20000", hab.dxf_cmd,
+    # Colonne entiere (A3 a la derniere ligne Excel) : la sortie deborde sur
+    # un nombre de lignes inconnu ici, et une MEF n'est evaluee que sur les
+    # cellules affichees. L'ancienne borne A20000 laissait sans couleur la
+    # fin d'un gros projet.
+    f.mef.append(("A3:A1048576", hab.dxf_section, 'LEFT($A3,6)="!====="'))
+    f.mef.append(("A3:A1048576", hab.dxf_cmd,
                   'OR($A3="configure terminal",$A3="end")'))
     return f
 
@@ -736,6 +802,12 @@ def feuille_config(sw, nom_cfg, style_mono):
     f = Feuille(nom_cfg, cols=[(1, 1, "110", False)], fige_entete=False,
                 autofiltre=False, couleur_onglet="FFD9D9D9")
     for l in sw.lignes:
+        # Seule retouche : les espaces de fin d'une ligne « interface X ».
+        # analyse.RE_INTERFACE les tolere, mais CHG_J fait un MATCH exact sur
+        # « interface X » : avec l'espace, Python trouvait le port et Excel
+        # affichait « interface introuvable ». Indentation et « ! » intacts.
+        if analyse.RE_INTERFACE.match(l):
+            l = l.rstrip()
         f.ajouter([txt(l, style_mono)] if l else [])
     return f
 
@@ -804,7 +876,7 @@ def feuille_impression(nom, f_cab, cab, hab, nom_projet):
                       % (ref(c_etat, r + 1) if r < fin else ref(c_etat, r),
                          c_etat, max(fin, r), ETAT_IMPRESSION))
             f.ajouter([form('%s&"   ·   "&%s&" %s"'
-                            % (ref("A", r), compte, ETAT_IMPRESSION.lower()),
+                            % (ref(xlsx.col_lettre(1), r), compte, ETAT_IMPRESSION.lower()),
                             style=style)]
                       + [vide(style)] * (n_imp - 1)
                       + [form('IF(COUNTIF(%s:$%s$%d,"%s")>0,"OUI","NON")'
@@ -883,6 +955,17 @@ def maj_filtre_impression(feuilles):
         # brk id = nombre de lignes avant le bandeau (meme convention que
         # feuille_cablage : f.sauts.append(len(f.lignes)) avant le bandeau).
         f_imp.sauts = [r - 1 for r in visibles[1:]]
+
+
+def sans_ajuster(sheetpr_xml):
+    """Retire « Ajuster a la page » (<pageSetUpPr fitToPage="1"/>) du sheetPr.
+
+    Le gabarit le porte sur sa feuille CABLAGE. Combine a MISE_EN_PAGE_CAB,
+    qui n'a ni fitToWidth ni fitToHeight (valeur 1 par defaut dans la norme),
+    il demandait « toute la feuille sur UNE page » : l'echelle 69 % et les
+    sauts de page par local technique etaient ignores.
+    """
+    return re.sub(r"<pageSetUpPr\b[^>]*/>", "", sheetpr_xml)
 
 
 def queue_impression(gab, nom_projet):
