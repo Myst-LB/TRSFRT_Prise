@@ -1,0 +1,13 @@
+# Backup files
+*.bak
+
+# Excel files: ignore all of them...
+*.xlsx
+# ...except templates
+!template.xlsx
+!*template*.xlsx
+# Excel lock files (~$name.xlsx) match the line above, so ignore them again
+~$*
+
+# Config file: never commit it
+*.txt
