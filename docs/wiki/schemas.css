@@ -1,0 +1,101 @@
+/* ---- schémas (SVG dessinés à la génération, une version par thème) */
+figure.schema { box-sizing: border-box; background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 20px; text-align: center }
+figure.schema .clair, figure.schema .sombre { overflow-x: auto }
+figure.schema svg { max-width: 100%; height: auto }
+/* schéma réduit pour tenir dans la hauteur de l'écran (barre des étapes comprise) ; bouton « Agrandir » si réduit.
+   --schema-sous-barre : hauteur d'une barre fixe en haut de la page hôte (0 par défaut) */
+figure.schema:not(.agrandi) .schema-dessin svg { max-height: max(240px, calc(100vh - var(--schema-sous-barre, 0px) - 210px)) }
+figure.schema.agrandi .schema-dessin svg { max-width: none }
+.schema-taille { display: block; margin: -8px -8px 6px auto; font: 600 12px/1 var(--f-display, inherit); border: 1px solid var(--rule, #e5e7eb);
+  background: var(--paper, #fff); color: var(--muted, #4f566b); border-radius: 4px; padding: 5px 8px; cursor: pointer }
+.schema-taille:hover { border-color: var(--accent, #4450b7); color: var(--accent, #4450b7) }
+.schema-taille[hidden] { display: none }
+/* écran large (classe « cote » posée par schemas-anim.js quand la largeur libre le permet) : code à droite du dessin */
+figure.schema.cote { display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, min(46%, 920px)); gap: 20px; align-items: start }
+figure.schema.cote .schema-cote { position: sticky; top: calc(var(--schema-sous-barre, 0px) + 12px); min-width: 0; text-align: left }
+figure.schema.cote .schema-code { margin-top: 0 }
+figure.schema.cote .schema-code pre, figure.schema.cote .schema-code figure.fiche { max-height: max(220px, calc(100vh - var(--schema-sous-barre, 0px) - 150px)) }
+figure.schema.cote .schema-code figure.fiche { overflow: auto }
+.schema-cote-vide { display: none; margin: 0; padding: 28px 18px; border: 1px dashed var(--rule, #e5e7eb); border-radius: 6px;
+  font-size: 14px; color: var(--muted, #4f566b); text-align: center; max-width: none }
+figure.schema.cote:not(.a-code) .schema-cote-vide { display: block }
+@media print { figure.schema { display: block !important; width: auto !important; margin-left: 0 !important }
+  figure.schema .schema-dessin svg { max-height: none !important } .schema-taille { display: none } }
+figure.schema .sombre { display: none }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) figure.schema .clair { display: none } :root:not([data-theme="light"]) figure.schema .sombre { display: block } }
+:root[data-theme="dark"] figure.schema .clair { display: none }
+:root[data-theme="dark"] figure.schema .sombre { display: block }
+/* schémas animés : étapes (stylo + estompage) et infobulles ; voir docs/wiki/gen.py, lire_annotations() */
+figure.schema[data-anim] { position: relative }
+figure.schema .etapes-on .node, figure.schema .etapes-on .rough-node, figure.schema .etapes-on .cluster,
+figure.schema .etapes-on .flowchart-link, figure.schema .etapes-on .edgeLabel { transition: opacity .25s }
+figure.schema .etapes-on .node:not(.en-avant), figure.schema .etapes-on .rough-node:not(.en-avant),
+figure.schema .etapes-on .cluster:not(.en-avant),
+figure.schema .etapes-on .flowchart-link:not(.en-avant), figure.schema .etapes-on .edgeLabel:not(.en-avant) { opacity: .16 }
+figure.schema .stylo path { fill: none; stroke: #d63a2f; stroke-width: 2.4; stroke-linecap: round; opacity: .9 }
+figure.schema .survolable { cursor: help }
+/* la barre reste visible en bas de l'écran tant que le schéma y est (schéma agrandi, plus haut que l'écran) */
+.schema-barre { display: flex; gap: 10px; align-items: flex-start; margin-top: 14px; padding: 12px 0 8px;
+  border-top: 1px dashed var(--rule); text-align: left; font-size: 15px; position: sticky; bottom: 0; background: var(--surface) }
+.schema-barre button { font: 600 13px/1 var(--f-display); border: 1px solid var(--rule); background: var(--paper);
+  color: var(--ink); border-radius: 4px; padding: 7px 10px; cursor: pointer; flex: none }
+.schema-barre button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent) }
+.schema-barre button:disabled { opacity: .4; cursor: default }
+.schema-barre .num { font: 600 12px/1 var(--f-display); letter-spacing: .1em; text-transform: uppercase; color: var(--accent);
+  margin-bottom: 4px }
+.schema-barre .txt { flex: 1; min-width: 0 }
+.schema-bulle { position: fixed; z-index: 50; max-width: 280px; background: var(--ink); color: var(--paper);
+  font-size: 13px; line-height: 1.4; padding: 7px 10px; border-radius: 5px; pointer-events: none; box-shadow: 0 4px 14px rgba(0,0,0,.18) }
+pre.schema-texte { background: var(--surface); border: 1px dashed var(--rule); border-radius: 6px; padding: 14px; overflow-x: auto }
+
+.schema-legende { display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: center; margin-top: 12px;
+  font-size: 13px; color: var(--muted, #4f566b) }
+.schema-legende span { display: inline-flex; align-items: center; gap: 6px }
+
+/* boîtes reliées au code (%% code) : clic = panneau du code ; étape = lignes surlignées */
+figure.schema .code-lie { cursor: pointer }
+figure.schema .code-lie:focus-visible { outline: 2px solid var(--accent, #4450b7); outline-offset: 3px }
+.schema-bulle .indice { margin-top: 4px; font-size: 12px; opacity: .75 }
+.schema-code { margin-top: 14px; text-align: left }
+/* le code est sur fond sombre dans les deux thèmes : variables locales pour ce qui s'y écrit */
+.schema-code figure.code { --muted: var(--code-muted, #9aa1ad); --rule: var(--code-rule, #2b2f38); --accent: var(--code-accent, #a9b1ff);
+  margin: 0; background: var(--code-bg, #181a1f); border-radius: 6px; overflow: hidden }
+.schema-code figcaption { font: 500 12.5px/1.4 var(--f-mono, ui-monospace, Consolas, monospace); padding: 8px 14px;
+  border-bottom: 1px solid var(--rule, #e5e7eb); color: var(--muted, #4f566b) }
+.schema-code figcaption a { color: inherit }
+.schema-code pre { margin: 0; padding: 12px 0; max-height: 380px; overflow: auto; font: 13px/1.6 var(--f-mono, ui-monospace, Consolas, monospace);
+  color: var(--code-ink, inherit) }
+.schema-code .l { display: block; padding: 0 16px 0 52px; position: relative; white-space: pre }
+.schema-code .l::before { content: attr(data-l); position: absolute; left: 0; width: 38px; text-align: right;
+  color: var(--muted, #4f566b); opacity: .6 }
+.schema-code .l.surligne { background: rgba(214, 58, 47, .14); box-shadow: inset 3px 0 0 #d63a2f }
+/* boîte dont le code est affiché : trait épais couleur d'accent (clair et sombre) */
+figure.schema .code-ouvert path {
+  stroke: var(--accent, #4450b7) !important; stroke-width: 3px !important }
+.schema-code-tete { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  margin-bottom: 6px; font-size: 14px; color: var(--muted, #4f566b) }
+.schema-code-tete strong { color: var(--ink, #111827) }
+.schema-code-tete button { font: 600 13px/1 var(--f-display, inherit); border: 1px solid var(--rule, #e5e7eb);
+  background: var(--paper, #fff); color: var(--ink, #111827); border-radius: 4px; padding: 6px 10px; cursor: pointer }
+.schema-code-tete button:hover { border-color: var(--accent, #4450b7); color: var(--accent, #4450b7) }
+/* fiche de module (%% code M : module.py) : rôle, puis fonctions */
+.schema-code .fiche-doc { padding: 10px 16px 2px; font-size: 14px; line-height: 1.5; color: var(--code-ink, inherit) }
+.schema-code .fiche-doc p { margin: 0 0 8px }
+.schema-code .fiche-fonctions { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 0 0 6px }
+.schema-code .fiche-fonctions td { padding: 5px 16px; border-top: 1px solid var(--rule, #e5e7eb); vertical-align: top;
+  color: var(--code-ink, inherit) }
+.schema-code .fiche-fonctions td:first-child { white-space: nowrap; width: 1% }
+.schema-code .fiche-entree { display: inline-block; font: 600 11px/1.6 var(--f-display, inherit); letter-spacing: .04em;
+  text-transform: uppercase; padding: 0 6px; margin-right: 4px; border-radius: 3px; border: 1px solid var(--accent, #4450b7);
+  color: var(--accent, #4450b7) }
+/* fiche : nom de fonction = bouton qui déplie son code ; lien vers la figure qui l'explique */
+.schema-code .fiche-fn { background: none; border: 0; padding: 0; cursor: pointer; color: var(--accent, #4450b7);
+  text-decoration: underline; text-underline-offset: 3px; font: inherit }
+.schema-code .fiche-fn[aria-expanded="true"] { font-weight: 700 }
+.schema-code .fiche-code > td { padding: 4px 16px 12px; max-width: 0 }   /* le code défile, le tableau ne s'élargit pas */
+.schema-code .fiche-code figure.code { margin: 0; border: 1px solid var(--rule, #e5e7eb) }
+.schema-code .fiche-code pre { max-height: 300px }
+.schema-code .fiche-voir { margin: 2px 0 8px; font-size: 13.5px; color: var(--muted, #4f566b) }
+.schema-code .fiche-voir a { color: var(--accent, #4450b7); font-weight: 600 }
+/* figure atteinte depuis une fiche : repérée un court instant */
+figure.cible-vue { outline: 3px solid var(--accent, #4450b7); outline-offset: 4px }

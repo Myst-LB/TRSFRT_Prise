@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="fr" data-accent="{{ACCENT}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>{{TITRE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Modèle du wiki (docs/wiki/gen.py). Charte « Craft » (maquettes Stitch, 2026-11) : trois volets (sommaire, texte,
+   plan de la page), surfaces neutres, filets d'un pixel, une seule couleur d'accent. Clair = « Minimalist Document »,
+   sombre = « Dark Studio ». L'accent se change : réglage « accent » de wiki.json (défaut du projet), puis choix du
+   lecteur (fenêtre « Apparence », mémorisé dans le navigateur). Sans réseau, les polices système prennent le relais. */
+:root {
+  --paper: #ffffff; --side: #f9fafb; --surface: #ffffff; --fill: #f3f4f6; --ink: #111827; --texte: #374151;
+  --muted: #4f566b; --faible: #6b7280; --rule: #e5e7eb; --rule-fort: #d1d5db;
+  --accent: #4450b7; --accent-fond: #5e6ad2; --sur-accent: #ffffff; --accent-soft: #eef0fb;
+  --warn: #b45309; --warn-trait: #d97706; --warn-soft: #fffbeb; --ok: #047857; --ok-soft: #ecfdf5;
+  --danger: #b91c1c; --danger-soft: #fef2f2; --mark: #fde68a; --pill: #f3f4f6;
+  --code-bg: #181a1f; --code-ink: #c8ccd4; --code-rule: #2b2f38; --code-muted: #9aa1ad; --code-accent: #a9b1ff;
+  --cm: #7f848e; --kw: #c678dd; --c-st: #98c379; --c-nb: #d19a66; --c-fn: #61afef; --c-pa: #e06c75; --c-va: #e5c07b;
+  --c-bi: #d19a66; --c-de: #e5c07b;
+  --ombre: 0 4px 12px -2px rgb(0 0 0 / .06), 0 2px 4px -1px rgb(0 0 0 / .03);
+  --ombre-forte: 0 20px 25px -5px rgb(0 0 0 / .1), 0 8px 10px -6px rgb(0 0 0 / .05); --voile: rgb(17 24 39 / .25);
+  --f-display: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-body: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --schema-sous-barre: 48px;   /* hauteur de .barre, pour les schémas (schemas.css) */
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --paper: #0d0e11; --side: #131418; --surface: #181920; --fill: #22232b; --ink: #f4f5f6; --texte: #c9ccd3;
+  --muted: #9ba1ad; --faible: #868c9a; --rule: #262833; --rule-fort: #3d4052;
+  --accent: #bdc2ff; --accent-fond: #5e6ad2; --sur-accent: #ffffff; --accent-soft: #1e2038;
+  --warn: #f59e0b; --warn-trait: #f59e0b; --warn-soft: #2a1f0b; --ok: #34d399; --ok-soft: #0f2a22;
+  --danger: #f87171; --danger-soft: #2d1517; --mark: #5b4a12; --pill: #181920;
+  --code-bg: #131418; --code-ink: #d6dae1; --code-rule: #262833; --code-muted: #9ba1ad; --code-accent: #bdc2ff;
+  --ombre: 0 8px 24px -4px rgb(0 0 0 / .45), 0 2px 6px -1px rgb(0 0 0 / .3);
+  --ombre-forte: 0 24px 48px -12px rgb(0 0 0 / .7), 0 0 0 1px rgb(255 255 255 / .03); --voile: rgb(5 5 8 / .75);
+  color-scheme: dark } }
+:root[data-theme="dark"] {
+  --paper: #0d0e11; --side: #131418; --surface: #181920; --fill: #22232b; --ink: #f4f5f6; --texte: #c9ccd3;
+  --muted: #9ba1ad; --faible: #868c9a; --rule: #262833; --rule-fort: #3d4052;
+  --accent: #bdc2ff; --accent-fond: #5e6ad2; --sur-accent: #ffffff; --accent-soft: #1e2038;
+  --warn: #f59e0b; --warn-trait: #f59e0b; --warn-soft: #2a1f0b; --ok: #34d399; --ok-soft: #0f2a22;
+  --danger: #f87171; --danger-soft: #2d1517; --mark: #5b4a12; --pill: #181920;
+  --code-bg: #131418; --code-ink: #d6dae1; --code-rule: #262833; --code-muted: #9ba1ad; --code-accent: #bdc2ff;
+  --ombre: 0 8px 24px -4px rgb(0 0 0 / .45), 0 2px 6px -1px rgb(0 0 0 / .3);
+  --ombre-forte: 0 24px 48px -12px rgb(0 0 0 / .7), 0 0 0 1px rgb(255 255 255 / .03); --voile: rgb(5 5 8 / .75);
+  color-scheme: dark }
+:root[data-theme="light"] { color-scheme: light }
+
+* { box-sizing: border-box }
+html { scroll-behavior: smooth; scroll-padding-top: 68px }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto } }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.625 var(--f-body); letter-spacing: -.005em;
+  -webkit-font-smoothing: antialiased }
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent-fond); outline-offset: 2px }
+button { font-family: inherit }
+code, pre { font-family: var(--f-mono); font-size: .8125em; letter-spacing: 0 }
+:not(pre) > code { background: var(--pill); color: var(--ink); border: 1px solid var(--rule); padding: .1em .36em; border-radius: 4px; overflow-wrap: anywhere }
+mark { background: var(--mark); color: inherit; border-radius: 2px }
+kbd { font: 500 11px/12px var(--f-mono); padding: 2px 5px; border: 1px solid var(--rule-fort); border-bottom-width: 2px; border-radius: 4px; background: var(--side); color: var(--muted); white-space: nowrap }
+svg.ico { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round }
+
+/* ---- trois volets : sommaire fixe, texte, plan de la page */
+.app { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100vh }
+.centre { min-width: 0 }
+.wrap { display: grid; grid-template-columns: minmax(0, 840px) 208px; gap: 48px; justify-content: center;
+  padding: 36px max(24px, env(safe-area-inset-right, 0px)) 40vh max(24px, env(safe-area-inset-left, 0px)) }
+.wrap.large { grid-template-columns: minmax(0, 1320px); padding-bottom: 96px }
+
+/* ---- volet gauche : sommaire */
+nav.toc { position: sticky; top: 0; height: 100vh; display: flex; flex-direction: column; gap: 10px; padding: 14px 10px 10px;
+  background: var(--side); border-right: 1px solid var(--rule); font-size: 13px }
+.marque { display: flex; align-items: center; gap: 10px; padding: 2px 6px 6px; min-width: 0 }
+.marque .logo { flex: none; width: 26px; height: 26px; border-radius: 6px; background: var(--accent-fond); color: var(--sur-accent); display: grid; place-items: center }
+.marque .logo svg { width: 15px; height: 15px }
+.marque b { display: block; font-weight: 600; font-size: 13.5px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.marque small { display: block; font-size: 11.5px; line-height: 1.3; color: var(--faible); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.marque > div { min-width: 0 }
+#ouvrir-recherche { display: flex; align-items: center; gap: 8px; width: 100%; height: 32px; font-size: 13px; padding: 0 8px; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); color: var(--faible); cursor: pointer; text-align: left }
+#ouvrir-recherche span { flex: 1 }
+#ouvrir-recherche:hover { border-color: var(--rule-fort); color: var(--ink) }
+.eyebrow { font: 500 11px/14px var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--faible) }
+nav.toc .eyebrow { padding: 8px 8px 0 }
+nav.toc > ol { flex: 1; overflow-y: auto; list-style: none; margin: 0; padding: 0 2px 12px 0; display: grid; gap: 1px; align-content: start }
+nav.toc ol ol { list-style: none; margin: 1px 0 6px 13px; padding: 0 0 0 6px; border-left: 1px solid var(--rule); display: none }
+nav.toc li.p.ouvert > ol { display: grid; gap: 1px }
+nav.toc a { display: block; padding: 5px 8px; border-radius: 4px; color: var(--muted); text-decoration: none; line-height: 18px; position: relative }
+nav.toc li.p > a { font-weight: 500; color: var(--ink) }
+nav.toc ol ol a { font-size: 12.5px }
+nav.toc a:hover { color: var(--ink); background: var(--fill) }
+nav.toc a.actif { color: var(--accent); background: var(--accent-soft) }
+nav.toc a.actif::before { content: ""; position: absolute; left: 0; top: 5px; bottom: 5px; width: 2px; border-radius: 2px; background: var(--accent-fond) }
+nav.toc .bas { display: flex; flex-wrap: wrap; gap: 6px 8px; padding: 8px 6px 0; border-top: 1px solid var(--rule); font-size: 11.5px; color: var(--faible); align-items: center; justify-content: space-between; white-space: nowrap }
+.bouton, nav.toc .bas button, .progress button { display: inline-flex; align-items: center; gap: 6px; height: 28px; font-size: 12.5px; font-weight: 500; background: var(--surface); border: 1px solid var(--rule); color: var(--ink); border-radius: 4px; padding: 0 9px; cursor: pointer }
+.bouton:hover, nav.toc .bas button:hover, .progress button:hover { background: var(--fill); border-color: var(--rule-fort) }
+
+/* ---- barre du haut : fil d'Ariane */
+.barre { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 12px; height: 48px; padding: 0 24px;
+  background: color-mix(in srgb, var(--paper) 86%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); font-size: 13px }
+#fil { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; color: var(--faible); white-space: nowrap; overflow: hidden }
+#fil span { overflow: hidden; text-overflow: ellipsis }
+#fil span:last-child { color: var(--ink); font-weight: 500 }
+#fil i { font-style: normal; color: var(--rule-fort); flex: none }
+.barre .bouton { width: 28px; padding: 0; justify-content: center; border-color: transparent; background: none; color: var(--muted) }
+.barre .bouton:hover { background: var(--fill) }
+#theme .lune, :root[data-theme="dark"] #theme .soleil { display: none }
+:root[data-theme="dark"] #theme .lune { display: block }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #theme .soleil { display: none } :root:not([data-theme="light"]) #theme .lune { display: block } }
+
+/* ---- volet droit : plan de la partie en cours */
+aside.rail { position: sticky; top: 72px; align-self: start; max-height: calc(100vh - 96px); overflow-y: auto; font-size: 12.5px }
+aside.rail .eyebrow { margin-bottom: 8px }
+aside.rail.efface { visibility: hidden }   /* un schéma large passe à sa place (schemas-anim.js) */
+#plan { list-style: none; margin: 0; padding: 0; border-left: 1px solid var(--rule); display: grid; gap: 1px }
+#plan a { display: block; padding: 4px 10px; margin-left: -1px; border-left: 1px solid transparent; color: var(--faible); text-decoration: none; line-height: 17px }
+#plan li.n3 a { padding-left: 22px }
+#plan a:hover { color: var(--ink) }
+#plan a.actif { color: var(--accent); border-left-color: var(--accent-fond); font-weight: 500 }
+
+/* ---- palette de recherche (Ctrl K) */
+dialog#palette { margin: 12vh auto auto; width: min(840px, calc(100vw - 32px)); max-height: 72vh; background: var(--surface); color: var(--ink); border: 1px solid var(--rule-fort); border-radius: 8px; box-shadow: var(--ombre-forte); padding: 0; overflow: hidden }
+dialog#palette[open] { display: flex; flex-direction: column }
+dialog#palette::backdrop, dialog#apparence::backdrop { background: var(--voile); backdrop-filter: blur(4px) }
+#palette .champ { flex: none; display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--rule); color: var(--accent) }
+#recherche { flex: 1; min-width: 0; height: 40px; font: 17px var(--f-body); border: 2px solid var(--accent-fond); outline: 0; border-radius: 4px; background: var(--side); color: var(--ink); padding: 0 12px }
+#onglets { flex: none; display: flex; gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--rule); background: var(--side); overflow-x: auto }
+#onglets:empty { display: none }
+#onglets button { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 9px; border: 0; border-radius: 4px; background: none; color: var(--muted); font-size: 12.5px; font-weight: 500; cursor: pointer }
+#onglets button:hover { background: var(--fill); color: var(--ink) }
+#onglets button[aria-pressed="true"] { background: var(--accent-fond); color: var(--sur-accent) }
+#onglets button span { font: 500 11px var(--f-mono); opacity: .75 }
+#resultats { list-style: none; margin: 0; padding: 6px; overflow-y: auto; flex: 1 }
+#resultats li[data-k] { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 0 12px; align-items: center }
+#resultats li[data-k] > * { grid-column: 2 }
+#resultats li[data-k] > .ic { grid-column: 1; grid-row: 1 / span 3; width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center; background: var(--fill); border: 1px solid var(--rule); color: var(--muted); font: 600 13px var(--f-mono) }
+#resultats li.sel .ic { background: var(--accent-fond); border-color: var(--accent-fond); color: var(--sur-accent) }
+#resultats li[data-k] > .ouvrir { grid-column: 3; grid-row: 1 / span 3; display: none; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--accent); white-space: nowrap }
+#resultats li.sel .ouvrir { display: inline-flex }
+#resultats li { padding: 8px 12px; border-radius: 6px; cursor: pointer; max-width: none; margin: 0 }
+#resultats li.sel { background: var(--accent-soft) }
+#resultats .chemin { font: 500 11px/14px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--faible) }
+#resultats .titre { font-weight: 500; font-size: 14.5px; margin: 2px 0 1px }
+#resultats .extrait { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+#resultats .vide { color: var(--faible); cursor: default; padding: 18px 12px; font-size: 14px }
+#palette .aide { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 8px 16px; border-top: 1px solid var(--rule); background: var(--side); font-size: 12px; color: var(--faible) }
+#palette .aide #compte { margin-left: auto }
+
+/* ---- fenêtre « Apparence » : mode et couleur d'accent (classe .apparence : la fenêtre, ou une zone montée par
+   window.wikiApparence.monter) */
+dialog#apparence { margin: 10vh auto auto; width: min(560px, calc(100vw - 32px)); max-height: 82vh; overflow-y: auto; background: var(--surface); color: var(--ink); border: 1px solid var(--rule-fort); border-radius: 8px; box-shadow: var(--ombre-forte); padding: 20px }
+.apparence h2 { font: 600 18px/24px var(--f-display); letter-spacing: -.015em; margin: 0; padding: 0 }
+.apparence .tete { display: flex; align-items: center; justify-content: space-between; gap: 12px }
+.apparence h3 { font: 500 11px/14px var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--faible); margin: 20px 0 8px }
+.apparence .modes, .apparence .palettes { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)) }
+.apparence .palettes { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) }
+.apparence .choix { display: flex; align-items: center; gap: 9px; min-height: 40px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--side); color: var(--ink); font-size: 13px; font-weight: 500; cursor: pointer; text-align: left }
+.apparence .choix:hover { border-color: var(--rule-fort) }
+.apparence .choix[aria-pressed="true"] { border-color: var(--accent-fond); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-fond) 22%, transparent); background: var(--surface) }
+.apparence .pastille { flex: none; width: 18px; height: 18px; border-radius: 5px; border: 1px solid rgb(127 127 127 / .35) }
+.apparence .libre { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--muted) }
+.apparence input[type=color] { width: 40px; height: 28px; padding: 0; border: 1px solid var(--rule-fort); border-radius: 4px; background: none; cursor: pointer }
+.apparence .apercu { margin-top: 8px; padding: 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); font-size: 13px }
+.apparence .apercu .plein { background: var(--accent-fond); color: var(--sur-accent); border-radius: 4px; padding: 5px 10px; font-weight: 500 }
+.apparence .apercu .doux { background: var(--accent-soft); color: var(--accent); border-radius: 4px; padding: 5px 10px; font-weight: 500 }
+.apparence .apercu a { font-weight: 500 }
+.apparence .apercu { display: grid; gap: 10px }
+.apparence .apercu .ligne { display: flex; flex-wrap: wrap; align-items: center; gap: 10px }
+.apparence .apercu .nav { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font-weight: 500; box-shadow: inset 2px 0 0 var(--accent-fond) }
+.apparence .apercu .jauge { flex: 1 1 120px; height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden }
+.apparence .apercu .jauge i { display: block; width: 62%; height: 100%; background: var(--accent-fond) }
+.apparence .apercu .mesure { font: 500 12px var(--f-mono); color: var(--muted) }
+.apparence .apercu .mesure b { color: var(--ok) }
+.apparence .curseurs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin-top: 12px; font-size: 12.5px; color: var(--muted) }
+.apparence .curseurs label { display: grid; gap: 4px }
+.apparence .curseurs label span { display: flex; justify-content: space-between }
+.apparence .curseurs output { font: 500 12px var(--f-mono); color: var(--ink) }
+.apparence input[type=range] { width: 100%; accent-color: var(--accent-fond) }
+.apparence [data-r="teinte"] { height: 6px; border-radius: 3px; appearance: none; -webkit-appearance: none; background: linear-gradient(90deg, #f43f5e, #f59e0b, #84cc16, #10b981, #06b6d4, #5e6ad2, #8b5cf6, #f43f5e) }
+.apparence .fonds { display: grid; gap: 8px; grid-template-columns: repeat(3, minmax(0, 1fr)) }
+.apparence .export { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; font-size: 12.5px; color: var(--muted) }
+.apparence .note { margin: 14px 0 0; font-size: 12.5px; color: var(--faible); max-width: none }
+/* 3.4.0 : cartes de mode et de palette, carte « Couleur libre et ajustements », rôles dérivés, aperçu en colonne */
+dialog#apparence { width: min(980px, calc(100vw - 32px)); max-height: 86vh; margin-top: 7vh }
+.apparence { container-type: inline-size }
+.apparence .app { display: grid; gap: 20px; align-items: start }
+@container (min-width: 760px) { .apparence .app { grid-template-columns: minmax(0, 1.7fr) minmax(250px, 1fr) } .apparence .app-apercu { position: sticky; top: 0 } }
+.apparence .app > div { min-width: 0 }
+.apparence h3 .n { float: right; font: 500 11px var(--f-mono); letter-spacing: 0; text-transform: none }
+.apparence .modes .choix, .apparence .palettes .choix { display: grid; align-content: start; gap: 8px; padding: 12px; font-weight: 400 }
+.apparence .choix .titre { display: flex; align-items: center; gap: 8px; font: 600 13.5px/18px var(--f-display); color: var(--ink) }
+.apparence .choix .coche { margin-left: auto; flex: none; width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--rule-fort) }
+.apparence .choix[aria-pressed="true"] .coche { border-color: var(--accent-fond); background: radial-gradient(circle, var(--accent-fond) 0 42%, transparent 48%) }
+.apparence .choix small { font-size: 12px; line-height: 17px; color: var(--faible) }
+.apparence .mini { display: flex; gap: 5px; height: 40px; padding: 9px; border-radius: 4px; border: 1px solid var(--rule) }
+.apparence .mini i { flex: 1; border-radius: 2px } .apparence .mini i:last-child { background: var(--accent-fond) }
+.apparence .mini.nuit { background: #0d0e11 } .apparence .mini.nuit i { background: #1d1e24 }
+.apparence .mini.jour { background: #ffffff } .apparence .mini.jour i { background: #eceef2 }
+.apparence .mini.systeme { padding: 0; overflow: hidden; background: linear-gradient(90deg, #0d0e11 50%, #f3f4f6 50%) } .apparence .mini.systeme i { display: none }
+.apparence .palettes { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)) }
+.apparence .palettes .choix[data-accent="ardoise"] { grid-column: 1 / -1 }
+.apparence .nuances { display: flex; align-items: center; gap: 5px }
+.apparence .nuances .pastille { width: 20px; height: 20px }
+.apparence .nuances code, .apparence .etiq { margin-left: auto; font: 500 10.5px/16px var(--f-mono); padding: 0 6px; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); color: var(--muted) }
+.apparence .etiq { margin-left: 0 } .apparence .etiq.acc { color: var(--accent); background: var(--accent-soft); border-color: transparent }
+.apparence .ajust { margin-top: 20px; padding: 16px; border: 1px solid var(--rule); border-radius: 8px; background: var(--side) }
+.apparence .ajust-tete { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px }
+.apparence .ajust-tete b { display: block; font: 600 15px/20px var(--f-display); color: var(--ink) } .apparence .ajust-tete small { font-size: 12px; color: var(--faible) }
+.apparence .ajust .libre { margin-top: 0 }
+.apparence .fonds .choix { font: 500 12.5px var(--f-mono) } .apparence .fonds .choix code { margin-left: auto; color: var(--faible); font-size: 11px }
+.apparence .roles { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) }
+.apparence .roles > div { display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); font-size: 12px; color: var(--muted) }
+.apparence .roles code { display: flex; align-items: center; gap: 8px; font: 500 12px var(--f-mono); color: var(--ink) } .apparence .roles code b { color: var(--ok) }
+.apparence .apercu .k { font: 500 11px/14px var(--f-body); color: var(--faible) }
+.apparence .apercu .plein.large { display: block; text-align: center; padding: 9px 12px }
+.apparence .apercu .navs { display: grid; gap: 2px; padding: 4px; border: 1px solid var(--rule); border-radius: 6px }
+.apparence .apercu .nav .etiq { margin-left: auto } .apparence .apercu .nav-autre { padding: 5px 10px; color: var(--muted) }
+.apparence .apercu .boite { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 6px; background: var(--side) }
+.apparence .apercu .boite .ligne { justify-content: space-between }
+.apparence .apercu .boite .jauge { flex: none; width: 100% }
+.apparence .apercu .sigle-ap { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 6px; background: var(--accent-soft); color: var(--accent); font: 600 11px var(--f-mono) }
+.apparence .apercu .bascule { margin-left: auto; width: 34px; height: 20px; border-radius: 10px; background: var(--accent-fond); position: relative } .apparence .apercu .bascule i { position: absolute; top: 3px; right: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--sur-accent) }
+.apparence .apercu .note-acc { margin: 0; font-size: 12px; color: var(--faible); max-width: none }
+
+/* ---- en-tête */
+header.top { display: grid; gap: 14px }
+header.top .eyebrow { color: var(--accent) }
+header.top h1 { font: 600 clamp(30px, 4.4vw, 40px)/1.2 var(--f-display); margin: 0; letter-spacing: -.03em }
+header.top p { margin: 0; max-width: 68ch; color: var(--muted) }
+.progress[hidden] { display: none }
+.progress { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 13px; color: var(--muted); padding: 10px 14px; border: 1px solid var(--rule); border-radius: 6px; background: var(--side) }
+.bar { flex: 1 1 200px; max-width: 320px; height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden }
+.bar > i { display: block; height: 100%; width: 0; background: var(--accent-fond); transition: width .15s ease-out }
+.progress b { font-variant-numeric: tabular-nums; color: var(--ink) }
+.progress button { margin-left: auto }
+.intro table { max-width: 100% }
+.infos { display: flex; flex-wrap: wrap; gap: 6px; font: 500 11.5px/18px var(--f-mono); color: var(--muted) }
+.infos span { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border: 1px solid var(--rule); border-radius: 4px; background: var(--side) }
+.infos span:first-child::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--ok) }
+
+/* ---- tuiles de chiffres clés (bloc « chiffres ») */
+.chiffres { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 18px 0 }
+.chiffres div { border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); padding: 12px 14px; min-width: 0 }
+.chiffres dt { font: 500 11px/14px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--faible) }
+.chiffres dd { margin: 6px 0 0; font: 600 24px/28px var(--f-display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--ink); overflow-wrap: anywhere }
+.chiffres dd.precision { margin-top: 2px; font: 400 12.5px/18px var(--f-body); letter-spacing: 0; color: var(--accent) }
+
+/* ---- parties et chapitres */
+section.partie { padding-top: 64px }
+section.partie > h1 { font: 600 30px/38px var(--f-display); margin: 0 0 16px; padding-top: 28px; border-top: 1px solid var(--rule); letter-spacing: -.025em }
+h2 { font: 600 22px/28px var(--f-display); margin: 56px 0 12px; padding-top: 8px; letter-spacing: -.02em }
+/* surtitre numéroté d'un chapitre : « 02.01 // PARTIE » (posé par le script, absent du texte cherché) */
+section.partie h2[data-sur]::before { content: attr(data-sur); display: block; margin-bottom: 6px; font: 500 11px/14px var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--faible) }
+h3 { font: 600 17px/24px var(--f-display); margin: 36px 0 8px; letter-spacing: -.01em }
+h4 { font: 600 14.5px/22px var(--f-display); margin: 26px 0 6px }
+h1 a.ancre, h2 a.ancre, h3 a.ancre { opacity: 0; margin-left: 8px; font-weight: 400; text-decoration: none; color: var(--faible) }
+:is(h1, h2, h3):hover a.ancre, a.ancre:focus-visible { opacity: 1 }
+main p, main li, main blockquote { max-width: 68ch }
+main p, main li { color: var(--texte) }
+main li { margin: 4px 0 }
+main ul, main ol { padding-left: 1.4em }
+main li::marker { color: var(--faible) }
+main strong { color: var(--ink); font-weight: 600 }
+p.lead { font-size: 17px; line-height: 27px; color: var(--muted) }
+blockquote.note { margin: 18px 0; font-size: 14.5px; line-height: 23px; background: var(--side); border: 1px solid var(--rule); border-left: 3px solid var(--accent-fond); border-radius: 4px; padding: 10px 16px }
+blockquote.note p { margin: 4px 0; color: var(--texte) }
+/* encadrés par type (« > [!NOTE] », « [!TIP] », « [!IMPORTANT] », « [!WARNING] », « [!CAUTION] ») */
+blockquote.note p.tete { display: flex; align-items: center; gap: 8px; margin: 2px 0 4px; font: 600 12px/16px var(--f-body); letter-spacing: .04em; text-transform: uppercase; color: var(--accent) }
+blockquote.note p.tete::before { content: "i"; flex: none; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid currentColor; display: grid; place-items: center; font: 700 10px/1 var(--f-mono); text-transform: none }
+blockquote.t-info { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent-fond) 25%, var(--rule)); border-left-color: var(--accent-fond) }
+blockquote.t-astuce { background: var(--ok-soft); border-color: color-mix(in srgb, var(--ok) 25%, var(--rule)); border-left-color: var(--ok) }
+blockquote.t-astuce p.tete { color: var(--ok) } blockquote.t-astuce p.tete::before { content: "\2713" }
+blockquote.t-important { border-left-color: var(--ink) }
+blockquote.t-important p.tete { color: var(--ink) } blockquote.t-important p.tete::before { content: "!" }
+blockquote.t-attention { background: var(--warn-soft); border-color: color-mix(in srgb, var(--warn-trait) 28%, var(--rule)); border-left-color: var(--warn-trait) }
+blockquote.t-attention p.tete { color: var(--warn) } blockquote.t-attention p.tete::before { content: "!" }
+blockquote.t-danger { background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 28%, var(--rule)); border-left-color: var(--danger) }
+blockquote.t-danger p.tete { color: var(--danger) } blockquote.t-danger p.tete::before { content: "\00D7" }
+
+/* ---- copier le lien d'un titre (3.3.0) : bouton icône à côté de l'ancre « # », sans texte */
+button.copie-lien { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; width: 24px; height: 24px; margin-left: 2px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--faible); cursor: pointer; opacity: 0 }
+:is(h1, h2, h3):hover button.copie-lien, button.copie-lien:focus-visible, button.copie-lien.copie { opacity: 1 }
+button.copie-lien:hover { background: var(--fill); color: var(--ink) }
+button.copie-lien.copie { color: var(--ok) }
+@media (hover: none) { h1 a.ancre, h2 a.ancre, h3 a.ancre, button.copie-lien { opacity: .55 } }
+
+/* ---- lien « Retour au portail » (réglage « portail » de wiki.json) et pied de page */
+nav.toc a.retour { display: flex; align-items: center; gap: 6px; padding: 4px 8px; font-size: 12.5px; font-weight: 500; color: var(--muted) }
+nav.toc a.retour:hover { color: var(--ink) }
+footer.pied { margin-top: 72px; padding-top: 14px; border-top: 1px solid var(--rule); font-size: 12.5px; line-height: 20px; color: var(--faible); overflow-wrap: anywhere }
+
+/* ---- cartes (bloc « cartes ») : une rangée, une colonne au téléphone */
+.cartes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; margin: 18px 0 }
+.carte { position: relative; display: flex; gap: 12px; align-items: flex-start; min-width: 0; padding: 14px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface) }
+.carte:hover, .carte:focus-within { border-color: var(--accent-fond) }
+.carte:has(a.carte-lien):hover { background: var(--accent-soft) }
+.carte-ico { flex: none; width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center; background: var(--fill); border: 1px solid var(--rule); color: var(--muted) }
+.carte-ico svg.ico { width: 18px; height: 18px }
+.carte-corps { min-width: 0 }
+.carte-titre { display: block; font: 600 14.5px/22px var(--f-display); color: var(--ink); overflow-wrap: anywhere }
+.carte-titre a { color: inherit; text-decoration: none }
+.carte-titre a::after { content: ""; position: absolute; inset: 0; border-radius: 6px }
+.carte-titre a:focus-visible { outline: none }
+.carte:has(a.carte-lien:focus-visible) { outline: 2px solid var(--accent-fond); outline-offset: 2px }
+.carte p { margin: 2px 0 0; font-size: 13.5px; line-height: 21px; color: var(--muted) }
+.carte p a { position: relative; z-index: 1 }
+
+/* ---- onglets de fichiers (bloc « onglets ») */
+.onglets-code { margin: 20px 0 }
+.onglets-code > [role="tablist"] { display: flex; gap: 4px; padding: 6px 6px 0; overflow-x: auto; border: 1px solid var(--code-rule); border-bottom: 0; border-radius: 6px 6px 0 0; background: var(--code-bg) }
+.onglets-code [role="tab"] { flex: none; height: 28px; padding: 0 10px; border: 0; border-radius: 4px 4px 0 0; background: none; color: var(--code-muted); font: 500 12px/18px var(--f-mono); cursor: pointer }
+.onglets-code [role="tab"]:hover { color: var(--code-ink) }
+.onglets-code [role="tab"][aria-selected="true"] { background: var(--code-rule); color: var(--code-ink) }
+.onglets-code [role="tab"]:focus-visible, .onglets-code [role="tabpanel"]:focus-visible { outline: 2px solid var(--accent-fond); outline-offset: -2px }
+.onglets-code figure { margin: 0 }
+.onglets-code figure.code { border-top-left-radius: 0; border-top-right-radius: 0 }
+.onglets-code > p.erreur, .onglets-code [role="tabpanel"] > p.erreur { margin: 0; padding: 12px 14px; border: 1px solid var(--rule); border-radius: 0 0 6px 6px }
+
+/* ---- numéros de ligne des blocs de code (3.3.0) : gouttière à part, hors de <code> */
+figure.code pre.num { display: flex; padding-left: 0 }
+figure.code pre.num > code { flex: 1 0 auto; display: block }
+.nums { flex: none; padding: 0 14px 0 14px; margin-right: 16px; border-right: 1px solid var(--code-rule); text-align: right; color: var(--code-muted); opacity: .7; user-select: none; -webkit-user-select: none; font-variant-numeric: tabular-nums }
+
+/* ---- bas de partie : partie précédente / suivante */
+nav.suite { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 56px }
+nav.suite a { display: grid; gap: 2px; padding: 12px 16px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface); text-decoration: none; color: var(--ink); min-width: 0 }
+nav.suite a:hover { border-color: var(--accent-fond); background: var(--accent-soft) }
+nav.suite a small { font: 500 11px/14px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--faible) }
+nav.suite a b { font-weight: 600; font-size: 14.5px; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+nav.suite a.suivante { text-align: right; grid-column: 2 }
+.small { font-size: 13px; color: var(--faible); margin: 6px 0 0 }
+.erreur { color: var(--danger); font-weight: 600 }
+hr { border: 0; border-top: 1px solid var(--rule); margin: 40px 0 }
+input[type=checkbox] { accent-color: var(--accent-fond) }
+
+/* ---- tableaux */
+.tbl { overflow-x: auto; margin: 18px 0 22px; border: 1px solid var(--rule); border-radius: 6px; background: var(--surface) }
+table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 22px }
+th, td { text-align: left; padding: 8px 14px; border-bottom: 1px solid var(--rule); vertical-align: top }
+td { color: var(--texte) }
+tr:last-child td { border-bottom: 0 }
+tbody tr:hover td { background: color-mix(in srgb, var(--fill) 55%, transparent) }
+th { font: 500 11px/14px var(--f-body); letter-spacing: .06em; text-transform: uppercase; color: var(--faible); background: var(--side); padding-block: 10px }
+table.files td:first-child { width: 1%; white-space: nowrap }
+
+/* ---- code : bloc sombre dans les deux thèmes, barre de titre (fichier, langue, copier) */
+figure { margin: 20px 0 }
+figure.code { --rule: var(--code-rule); --muted: var(--code-muted); --accent: var(--code-accent); --ink: #f4f5f6 }
+figure.code { position: relative; background: var(--code-bg); border: 1px solid var(--code-rule); border-radius: 6px; overflow: hidden }
+figure.code figcaption { display: flex; align-items: center; gap: 10px; min-height: 36px; font: 500 12px/18px var(--f-mono); padding: 6px 8px 6px 14px; border-bottom: 1px solid var(--code-rule); color: var(--code-muted) }
+figure.code figcaption a { color: var(--code-muted) }
+figure.code figcaption .langue { font-size: 11px; letter-spacing: .04em; padding: 1px 6px; border: 1px solid var(--code-rule); border-radius: 4px; color: var(--code-muted) }
+figure.code figcaption .legende { flex: 1; min-width: 0; overflow-wrap: anywhere }
+figure.code pre { margin: 0; padding: 14px 16px; overflow-x: auto; color: var(--code-ink); line-height: 20px; font-size: 13px }
+figure.code button.copier { margin-left: auto; flex: none; height: 24px; font: 500 11.5px var(--f-body); padding: 0 8px; border: 1px solid transparent; background: none; color: var(--code-muted); border-radius: 4px; cursor: pointer }
+figure.code button.copier:hover { border-color: var(--code-rule); color: #f4f5f6; background: rgb(255 255 255 / .05) }
+.cm { color: var(--cm); font-style: italic } .kw { color: var(--kw) }
+.st { color: var(--c-st) } .nb { color: var(--c-nb) } .fn { color: var(--c-fn) } .pa { color: var(--c-pa) }
+.va { color: var(--c-va) } .bi { color: var(--c-bi); font-style: italic } .de { color: var(--c-de) }
+.legende-code { display: flex; flex-wrap: wrap; gap: 4px 14px; font: 12.5px var(--f-mono); margin: 8px 0 0; padding: 8px 12px; border-radius: 6px; background: var(--code-bg); color: var(--code-ink) }
+
+{{SCHEMAS_CSS}}/* ---- captures */
+.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 20px; margin: 22px 0 }
+figure.shot { margin: 0; min-width: 0 }
+.shots > figure.shot.large, main > figure.shot { grid-column: 1 / -1 }
+figure.shot button { display: block; width: 100%; padding: 0; border: 1px solid var(--rule); border-radius: 6px; overflow: hidden; background: var(--surface); cursor: zoom-in }
+figure.shot button:hover { border-color: var(--rule-fort) }
+figure.shot img { display: block; width: 100%; height: auto; max-height: 520px; object-fit: cover; object-position: top }
+figure.shot.large img { max-height: 760px }
+figure.shot figcaption { font-size: 13px; color: var(--faible); margin-top: 6px }
+
+/* ---- à valider */
+.avalider { background: var(--warn-soft); border: 1px solid color-mix(in srgb, var(--warn-trait) 28%, var(--rule)); border-left: 3px solid var(--warn-trait); border-radius: 4px; padding: 12px 16px; margin: 26px 0 }
+.avalider h4 { margin: 0 0 10px; font: 500 11px/14px var(--f-body); letter-spacing: .08em; text-transform: uppercase; color: var(--warn) }
+.avalider ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px }
+.avalider li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; max-width: none; font-size: 14.5px; line-height: 22px; margin: 0; color: var(--ink) }
+.avalider-barre { display: flex; align-items: center; gap: 12px; margin: -2px 0 12px; font-size: 12.5px; color: var(--muted) }
+.avalider-jauge { flex: 1 1 120px; max-width: 240px; height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden }
+.avalider-jauge > i { display: block; height: 100%; width: 0; background: var(--accent-fond); transition: width .15s ease-out }
+.avalider-texte { font-variant-numeric: tabular-nums; white-space: nowrap }
+.avalider-texte b { color: var(--ink) }
+.avalider input { margin: 3px 0 0; width: 16px; height: 16px }
+.avalider input:checked + label { color: var(--faible); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--faible) 60%, transparent) }
+
+dialog#zoom { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh }
+dialog#zoom::backdrop { background: rgb(5 5 8 / .82) }
+dialog#zoom img { display: block; max-width: 96vw; max-height: 90vh; border-radius: 6px }
+dialog#zoom button { position: fixed; top: 14px; right: 14px }
+
+/* ---- écrans étroits : plus de plan à droite, puis sommaire en tiroir */
+#ouvrir { display: none }
+@media (max-width: 1240px) { .wrap { grid-template-columns: minmax(0, 840px) } aside.rail { display: none } }
+@media (max-width: 960px) {
+  .app { grid-template-columns: minmax(0, 1fr) }
+  .wrap, .wrap.large { padding: 24px 16px 40vh }
+  .barre { padding: 0 12px 0 52px }
+  nav.toc { position: fixed; z-index: 30; top: 0; bottom: 0; left: 0; height: auto; width: min(86vw, 300px); transform: translateX(-105%); transition: transform .15s ease-out }
+  nav.toc.ouvert { transform: none; box-shadow: var(--ombre-forte) }
+  #ouvrir { display: inline-flex; position: fixed; z-index: 31; top: 10px; left: 10px; width: 32px; height: 28px; padding: 0; justify-content: center }
+  h2 { font-size: 20px; margin-top: 44px } section.partie > h1 { font-size: 24px; line-height: 32px }
+  .apparence .modes, .apparence .fonds, .apparence .curseurs { grid-template-columns: 1fr }
+}
+@media print {
+  nav.toc, .barre, aside.rail, #ouvrir, .progress button, figure.code button.copier, nav.suite, button.copie-lien, .onglets-code > [role="tablist"] { display: none !important }
+  .onglets-code [role="tabpanel"][hidden] { display: block !important }
+  .app, .wrap { display: block; padding: 0 } section.partie { break-before: page }
+  figure.shot img { max-height: none }
+}
+</style>
+</head>
+<body>
+<button id="ouvrir" class="bouton" type="button" aria-label="Sommaire"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg></button>
+<div class="app">
+  <nav class="toc" aria-label="Sommaire">
+    {{PORTAIL}}
+    <div class="marque"><span class="logo"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.5h7.5A2.5 2.5 0 0 1 13 5v8.5H5.5A2.5 2.5 0 0 1 3 11zM3 11a2.5 2.5 0 0 1 2.5-2.5H13"/></svg></span>
+      <div><b>{{TITRE}}</b><small>{{SURTITRE}}</small></div></div>
+    <button type="button" id="ouvrir-recherche"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><span>Rechercher…</span><kbd>Ctrl K</kbd></button>
+    <div class="eyebrow">Sommaire</div>
+    <ol id="toc">{{TOC}}</ol>
+    <div class="bas"><button type="button" id="ouvrir-apparence"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11M8 5a3 3 0 0 1 0 6" /></svg>Apparence</button><span>Généré le {{DATE}}</span></div>
+  </nav>
+  <div class="centre">
+    <div class="barre">
+      <div id="fil" aria-label="Fil d'Ariane"><span>{{TITRE}}</span></div>
+      <button type="button" id="theme" class="bouton" title="Thème clair / sombre" aria-label="Thème clair / sombre"><svg class="ico soleil" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg><svg class="ico lune" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.5A6 6 0 0 1 6.5 2.5a6 6 0 1 0 7 7z"/></svg></button>
+    </div>
+    <div class="wrap">
+      <main id="contenu">
+        <header class="top">
+          <div class="eyebrow">{{SURTITRE}}</div>
+          <h1>{{TITRE}}</h1>
+          <div class="infos"><span>Généré le {{DATE}}</span><span>{{MINUTES}} min de lecture</span><span>{{PARTIES}} parties</span><span>{{TOTAL}} à valider</span></div>
+          <div class="intro">{{INTRO}}</div>
+          <div class="progress">
+            <div class="bar" aria-hidden="true"><i id="barre"></i></div>
+            <span><b id="faits">0</b> / {{TOTAL}} points « à valider » cochés</span>
+            <button type="button" id="raz">Tout décocher</button>
+          </div>
+        </header>
+        {{CORPS}}
+        {{PIED}}
+      </main>
+      <aside class="rail" aria-label="Plan de la partie en cours">
+        <div class="eyebrow">Sur cette page</div>
+        <ol id="plan"></ol>
+      </aside>
+    </div>
+  </div>
+</div>
+<dialog id="palette" aria-label="Recherche dans le wiki">
+  <div class="champ"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><input id="recherche" type="search" placeholder="Rechercher dans tout le wiki…" autocomplete="off" spellcheck="false"><kbd>Échap</kbd></div>
+  <div id="onglets" role="tablist" aria-label="Filtrer les résultats"></div>
+  <ol id="resultats" role="listbox"></ol>
+  <div class="aide"><span><kbd>↑</kbd> <kbd>↓</kbd> choisir</span><span><kbd>Tab</kbd> onglet</span><span><kbd>Entrée</kbd> ouvrir</span><span id="compte"></span></div>
+</dialog>
+<dialog id="zoom" aria-label="Capture agrandie"><button type="button" id="fermer" class="bouton">Fermer</button><img id="zoomimg" alt=""></dialog>
+<script id="apparence-js">
+/* Apparence : mode (clair / sombre / système), couleur d'accent, fond du mode sombre. Script autonome, repris tel quel
+   par les pages qui partagent ce design (portail du Hub). Mémoire du navigateur : « wiki-theme » (light / dark,
+   absent = système), « wiki-accent » (nom de palette ou #rrggbb, absent = accent du projet : attribut data-accent
+   de <html>) et « wiki-fond » (obsidian / slate / zinc). Les rôles sont dérivés de la couleur choisie : texte et
+   liens assez contrastés, fond doux, texte lisible sur fond plein. Point d'entrée pour une page qui veut les réglages
+   dans son propre cadre : window.wikiApparence = { ouvrir(), monter(élément) } (3.3.0). */
+(function () {
+  var racine = document.documentElement, mq = matchMedia('(prefers-color-scheme: dark)');
+  var PALETTES = [['indigo', 'Indigo', '#5e6ad2', 'Précision et clarté technique'], ['emeraude', 'Émeraude', '#10b981', 'Vif, lisible sur fond sombre'],
+    ['violet', 'Violet', '#8b5cf6', 'Profond, plus créatif'], ['ambre', 'Ambre', '#f59e0b', 'Chaleureux, signalétique'],
+    ['rose', 'Rose', '#f43f5e', 'Audacieux'], ['cyan', 'Cyan', '#06b6d4', 'Froid et net'], ['ardoise', 'Ardoise', '#64748b', 'Aucune couleur, neutralité complète']];
+  // fonds du mode sombre : toile, volet, carte, survol, filet, filet fort
+  var FONDS = { obsidian: ['Obsidian', '#0d0e11', '#131418', '#181920', '#22232b', '#262833', '#3d4052'],
+    slate: ['Slate', '#121316', '#17181c', '#1d1e23', '#292a30', '#2c2e36', '#454854'],
+    zinc: ['Zinc', '#18181b', '#1d1d21', '#232327', '#2e2e33', '#333338', '#4b4b53'] };
+  var VARS_FOND = ['--paper', '--side', '--surface', '--fill', '--rule', '--rule-fort'];
+  function stocker(cle, val) { try { val === null ? localStorage.removeItem(cle) : localStorage.setItem(cle, val); } catch (e) {} }
+  function relire(cle) { try { return localStorage.getItem(cle); } catch (e) { return null; } }
+  function sombre() { return racine.dataset.theme ? racine.dataset.theme === 'dark' : mq.matches; }
+  function hex(v) {
+    v = (v || '').trim().toLowerCase();
+    for (var i = 0; i < PALETTES.length; i++) if (PALETTES[i][0] === v) return PALETTES[i][2];
+    return /^#[0-9a-f]{6}$/.test(v) ? v : null;
+  }
+  function rvb(h) { return [1, 3, 5].map(function (i) { return parseInt(h.slice(i, i + 2), 16); }); }
+  function versHex(c) { return '#' + c.map(function (x) { return ('0' + Math.round(x).toString(16)).slice(-2); }).join(''); }
+  function melange(a, b, t) { return a.map(function (x, i) { return x + (b[i] - x) * t; }); }
+  function lum(c) {
+    var l = c.map(function (x) { x /= 255; return x <= .03928 ? x / 12.92 : Math.pow((x + .055) / 1.055, 2.4); });
+    return .2126 * l[0] + .7152 * l[1] + .0722 * l[2];
+  }
+  function contraste(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+  function tsl(c) {   // rouge vert bleu -> teinte (0-360), saturation et clarté (0-100)
+    var r = c[0] / 255, g = c[1] / 255, b = c[2] / 255, M = Math.max(r, g, b), m = Math.min(r, g, b), d = M - m, h = 0;
+    if (d) h = M === r ? ((g - b) / d + 6) % 6 : M === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    var l = (M + m) / 2;
+    return [Math.round(h * 60) % 360, Math.round(100 * (d ? d / (1 - Math.abs(2 * l - 1)) : 0)), Math.round(100 * l)];
+  }
+  function deTsl(h, s, l) {
+    s /= 100; l /= 100;
+    var k = function (n) { return (n + h / 30) % 12; }, a = s * Math.min(l, 1 - l);
+    var f = function (n) { return 255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))); };
+    return versHex([f(0), f(8), f(4)]);
+  }
+  function fondChoisi() { var f = relire('wiki-fond'); return FONDS[f] ? f : 'obsidian'; }
+  function roles(base, nuit) {
+    var c = rvb(base), fond = nuit ? rvb(FONDS[fondChoisi()][3]) : [255, 255, 255], vers = nuit ? [255, 255, 255] : [0, 0, 0], texte = c, t = 0;
+    while (contraste(texte, fond) < (nuit ? 7 : 5.2) && t < 1) { t += .04; texte = melange(c, vers, t); }
+    return { '--accent': versHex(texte), '--accent-fond': base,
+      '--sur-accent': contraste([255, 255, 255], c) >= 3.2 ? '#ffffff' : '#111827',
+      '--accent-soft': versHex(melange(nuit ? rvb(FONDS[fondChoisi()][1]) : [255, 255, 255], c, nuit ? .2 : .1)) };
+  }
+  function choixAccent() { return hex(relire('wiki-accent')) ? relire('wiki-accent') : (hex(racine.dataset.accent) ? racine.dataset.accent : 'indigo'); }
+  function appliquer() {
+    var choix = choixAccent(), nuit = sombre(), r = roles(hex(choix), nuit), f = fondChoisi();
+    Object.keys(r).forEach(function (k) { if (choix === 'indigo' && f === 'obsidian') racine.style.removeProperty(k); else racine.style.setProperty(k, r[k]); });
+    VARS_FOND.forEach(function (v, i) { if (nuit && f !== 'obsidian') racine.style.setProperty(v, FONDS[f][i + 1]); else racine.style.removeProperty(v); });
+    document.dispatchEvent(new Event('wiki-apparence'));
+  }
+  var t = relire('wiki-theme');
+  if (t === 'light' || t === 'dark') racine.dataset.theme = t;
+  appliquer();
+  mq.addEventListener('change', appliquer);
+  function mode(m) {
+    if (m === 'systeme') { delete racine.dataset.theme; stocker('wiki-theme', null); } else { racine.dataset.theme = m; stocker('wiki-theme', m); }
+    appliquer();
+  }
+  var bt = document.getElementById('theme');
+  if (bt) bt.addEventListener('click', function () { mode(sombre() ? 'light' : 'dark'); });
+
+  /* Réglages : construits une fois (contenu), branchés (brancher) et repeints (peindre) dans chaque zone qui les
+     montre : la fenêtre « Apparence » (#ouvrir-apparence) et, pour une page qui les veut dans son propre cadre
+     (réglages du portail du Hub), window.wikiApparence.monter(élément). Les ids (#teinte, #mesure…) n'existent que
+     dans la fenêtre ; chaque élément porte aussi data-r, qui sert de repère partout. */
+  var dlg = null, zones = [];
+  function pastille(c) { return '<span class="pastille" style="background:' + c + '"></span>'; }
+  function lire(v) { return getComputedStyle(racine).getPropertyValue(v).trim(); }
+  function nuances(h) {   // base, claire, fond doux du mode sombre, profonde
+    var c = rvb(h);
+    return [h, versHex(melange(c, [255, 255, 255], .3)), versHex(melange(rvb(FONDS.obsidian[1]), c, .2)), versHex(melange(c, [0, 0, 0], .35))];
+  }
+  function defautProjet() { return hex(racine.dataset.accent) ? racine.dataset.accent : 'indigo'; }
+  function contenu(fenetre) {
+    function r(nom) { return ' data-r="' + nom + '"' + (fenetre ? ' id="' + nom + '"' : ''); }
+    var MODES = [['dark', 'Sombre', 'nuit', 'Ardoise profonde, pour la lecture longue.'], ['light', 'Clair', 'jour', 'Papier clair, pour les pièces lumineuses.'],
+      ['systeme', 'Système', 'systeme', 'Suit le réglage de l\'ordinateur.']];
+    var role = function (titre, nom) { return '<div><span>' + titre + '</span><code><span class="pastille"' + r(nom) + '></span><span' + r(nom + '-code') + '></span></code></div>'; };
+    return (fenetre ? '<div class="tete"><h2>Apparence</h2><button type="button" class="bouton" data-fermer>Fermer</button></div>' : '') +
+      '<div class="app"><div class="app-reglages">' +
+      '<h3>Mode d\'affichage <span class="n">3 options</span></h3><div class="modes">' + MODES.map(function (m) {
+        return '<button type="button" class="choix" data-mode="' + m[0] + '"><span class="titre">' + m[1] + '<span class="coche"></span></span>' +
+          '<span class="mini ' + m[2] + '"><i></i><i></i><i></i></span><small>' + m[3] + '</small></button>'; }).join('') + '</div>' +
+      '<h3>Palettes <span class="n">' + PALETTES.length + ' palettes</span></h3><div class="palettes">' + PALETTES.map(function (p) {
+        return '<button type="button" class="choix" data-accent="' + p[0] + '"><span class="titre">' + p[1] + '<span class="etiq" data-defaut-tag hidden>défaut</span><span class="coche"></span></span>' +
+          '<small>' + p[3] + '</small><span class="nuances">' + nuances(p[2]).map(pastille).join('') + '<code>' + p[2].toUpperCase() + '</code></span></button>'; }).join('') + '</div>' +
+      '<div class="ajust"><div class="ajust-tete"><div><b>Couleur libre et ajustements</b><small>Une nuance à vous, dérivée en rôles automatiquement.</small></div>' +
+      '<label class="libre"><input type="color" aria-label="Couleur libre"> <code' + r('accent-code') + '></code></label></div>' +
+      '<div class="curseurs"><label><span>Teinte <output' + r('teinte-val') + '></output></span><input type="range"' + r('teinte') + ' min="0" max="359"></label>' +
+      '<label><span>Saturation <output' + r('saturation-val') + '></output></span><input type="range"' + r('saturation') + ' min="0" max="100"></label></div>' +
+      '<section><h3>Fond du mode sombre</h3><div class="fonds">' + Object.keys(FONDS).map(function (k, n) {
+        return '<button type="button" class="choix" data-fond="' + k + '">' + pastille(FONDS[k][1]) + '0' + (n + 1) + '. ' + FONDS[k][0] + '<code>' + FONDS[k][1] + '</code></button>'; }).join('') + '</div></section>' +
+      '<h3>Rôles dérivés automatiquement</h3><div class="roles">' + role('Bouton et focus', 'role-fond') + role('Liens et texte', 'role-texte') +
+      role('Surfaces teintées', 'role-doux') + '<div><span>Contraste vérifié</span><code><b' + r('role-contraste') + '></b></code></div></div></div>' +
+      '<p class="note">Choix gardés dans ce navigateur, pour tous les wikis et le portail ouverts depuis le même endroit. ' +
+      '<button type="button" class="bouton" data-defaut>Revenir aux réglages du projet</button></p></div>' +
+      '<div class="app-apercu"><h3>Aperçu</h3><div class="apercu">' +
+      '<span class="k">Bouton d\'action</span><span class="plein large">Ouvrir le wiki</span>' +
+      '<span class="k">Navigation active</span><div class="navs"><span class="nav">Architecture<span class="etiq acc">Actif</span></span><span class="nav-autre">Règles de code</span></div>' +
+      '<span class="k">Cases, étiquettes et barres</span><div class="boite"><div class="ligne"><label><input type="checkbox" checked> Point validé</label><span class="etiq acc">#J3.5</span></div>' +
+      '<div class="ligne"><span>Avancement</span><b>62 %</b></div><span class="jauge"><i></i></span></div>' +
+      '<div class="boite"><div class="ligne"><span class="sigle-ap">HU</span><span style="flex:1"><b>Hub</b><br><small>Projet épinglé</small></span><span class="bascule"><i></i></span></div></div>' +
+      '<div class="ligne"><span class="doux">Sélection</span><a href="#" onclick="return false">Un lien dans le texte</a></div>' +
+      '<div class="mesure"' + r('mesure') + '></div><p class="note-acc">Le texte d\'accent est éclairci ou assombri jusqu\'à rester lisible.</p></div>' +
+      '<div class="export"><span>Pour en faire le réglage du projet, dans <code>docs/wiki/wiki.json</code> :</span>' +
+      '<code' + r('export-code') + '></code><button type="button" class="bouton" data-copier>Copier</button></div></div></div>';
+  }
+  function peindreZone(z) {
+    var m = racine.dataset.theme === 'dark' ? 'dark' : racine.dataset.theme === 'light' ? 'light' : 'systeme', a = choixAccent(), h = hex(a), x = tsl(rvb(h));
+    function r(nom) { return z.querySelector('[data-r="' + nom + '"]'); }
+    z.querySelectorAll('[data-mode]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.mode === m ? 'true' : 'false'); });
+    z.querySelectorAll('[data-accent]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.accent === a ? 'true' : 'false'); });
+    z.querySelectorAll('[data-fond]').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.fond === fondChoisi() ? 'true' : 'false'); });
+    z.querySelector('input[type=color]').value = h;
+    r('accent-code').textContent = h;
+    r('teinte').value = x[0]; r('teinte-val').textContent = x[0] + '°';
+    r('saturation').value = x[1]; r('saturation-val').textContent = x[1] + ' %';
+    var c = contraste(rvb(lire('--accent')), rvb(lire('--surface')));
+    r('mesure').innerHTML = 'Contraste du texte d\'accent : <b>' + c.toFixed(1).replace('.', ',') + ':1 ' + (c >= 7 ? 'AAA' : c >= 4.5 ? 'AA' : '') + '</b>';
+    r('export-code').textContent = '"accent": "' + a + '"';
+    [['role-fond', '--accent-fond'], ['role-texte', '--accent'], ['role-doux', '--accent-soft']].forEach(function (x) {
+      var v = lire(x[1]); r(x[0]).style.background = v; r(x[0] + '-code').textContent = v; });
+    r('role-contraste').textContent = c.toFixed(1).replace('.', ',') + ':1 ' + (c >= 7 ? 'AAA' : c >= 4.5 ? 'AA' : '');
+    z.querySelectorAll('[data-defaut-tag]').forEach(function (t) { t.hidden = t.closest('[data-accent]').dataset.accent !== defautProjet(); });
+    z.querySelector('.fonds').closest('section').hidden = !sombre();
+  }
+  function peindre() { zones.forEach(peindreZone); }
+  function choisir(v) { stocker('wiki-accent', v); appliquer(); peindre(); }
+  function brancher(z) {
+    function r(nom) { return z.querySelector('[data-r="' + nom + '"]'); }
+    z.addEventListener('click', function (e) {
+      var b = e.target.closest('button');
+      if (z === dlg && (e.target === dlg || (b && b.hasAttribute('data-fermer')))) { dlg.close(); return; }
+      if (!b) return;
+      if (b.dataset.mode) mode(b.dataset.mode);
+      else if (b.dataset.accent) { stocker('wiki-accent', b.dataset.accent); appliquer(); }
+      else if (b.dataset.fond) { stocker('wiki-fond', b.dataset.fond === 'obsidian' ? null : b.dataset.fond); appliquer(); }
+      else if (b.hasAttribute('data-defaut')) { stocker('wiki-accent', null); stocker('wiki-fond', null); mode('systeme'); }
+      else if (b.hasAttribute('data-copier')) {
+        var texte = r('export-code').textContent;
+        if (navigator.clipboard) navigator.clipboard.writeText(texte).then(function () { b.textContent = 'Copié'; setTimeout(function () { b.textContent = 'Copier'; }, 1200); });
+      }
+      peindre();
+    });
+    z.querySelector('input[type=color]').addEventListener('input', function (e) { choisir(e.target.value); });
+    function curseur() {
+      var x = tsl(rvb(hex(choixAccent())));
+      choisir(deTsl(+r('teinte').value, +r('saturation').value, Math.max(35, Math.min(x[2], 65))));
+    }
+    r('teinte').addEventListener('input', curseur);
+    r('saturation').addEventListener('input', curseur);
+  }
+  function ouvrir() {
+    if (!dlg) {
+      dlg = document.createElement('dialog'); dlg.id = 'apparence'; dlg.className = 'apparence'; dlg.setAttribute('aria-label', 'Apparence');
+      dlg.innerHTML = contenu(true);
+      document.body.appendChild(dlg);
+      brancher(dlg); zones.push(dlg);
+    }
+    peindre(); dlg.showModal();
+  }
+  // les zones montées suivent aussi les changements faits ailleurs (bouton de thème, autre onglet des réglages)
+  document.addEventListener('wiki-apparence', function () { if (zones.length) peindre(); });
+  window.wikiApparence = {
+    ouvrir: ouvrir,
+    monter: function (conteneur) {   // les mêmes réglages dans un élément (sans bouton Fermer), synchronisés avec la fenêtre
+      if (!conteneur) return null;
+      if (zones.indexOf(conteneur) < 0) {
+        conteneur.classList.add('apparence'); conteneur.innerHTML = contenu(false);
+        brancher(conteneur); zones.push(conteneur);
+      }
+      peindreZone(conteneur);
+      return conteneur;
+    }
+  };
+  var bo = document.getElementById('ouvrir-apparence');
+  if (bo) bo.addEventListener('click', ouvrir);
+})();
+</script>
+<script>
+(function () {
+  var contenu = document.getElementById('contenu'), nav = document.querySelector('nav.toc');
+  function stocker(cle, val) { try { localStorage.setItem(cle, val); } catch (e) {} }
+  function relire(cle) { try { return localStorage.getItem(cle); } catch (e) { return null; } }
+
+  /* ---- cases « À valider » : mémorisées dans ce navigateur */
+  var CLE = 'wiki-{{CLE}}-valider', etat = {};
+  try { etat = JSON.parse(relire(CLE) || '{}') || {}; } catch (e) { etat = {}; }
+  var cases = Array.prototype.slice.call(document.querySelectorAll('input.v'));
+  function maj() {
+    var n = cases.filter(function (c) { return c.checked; }).length;
+    document.getElementById('faits').textContent = n;
+    document.getElementById('barre').style.width = (cases.length ? 100 * n / cases.length : 0) + '%';
+    // barre « n / m validés » de chaque bloc « à valider »
+    document.querySelectorAll('.avalider').forEach(function (bloc) {
+      var cs = bloc.querySelectorAll('input.v'), k = 0, jauge = bloc.querySelector('.avalider-jauge');
+      cs.forEach(function (c) { if (c.checked) k++; });
+      var f = bloc.querySelector('.avalider-faits'); if (f) f.textContent = k;
+      if (jauge) { jauge.setAttribute('aria-valuenow', k); jauge.firstElementChild.style.width = (cs.length ? 100 * k / cs.length : 0) + '%'; }
+    });
+  }
+  cases.forEach(function (c) {
+    c.checked = !!etat[c.id];
+    c.addEventListener('change', function () { etat[c.id] = c.checked; stocker(CLE, JSON.stringify(etat)); maj(); });
+  });
+  document.getElementById('raz').addEventListener('click', function () {
+    cases.forEach(function (c) { c.checked = false; }); etat = {}; stocker(CLE, '{}'); maj();
+  });
+  maj();
+  if (!cases.length) document.querySelector('.progress').hidden = true;
+
+  /* ---- ancres, boutons « Copier » */
+  contenu.querySelectorAll('h1[id], h2[id], h3[id]').forEach(function (h) {
+    var a = document.createElement('a'); a.className = 'ancre'; a.href = '#' + h.id; a.textContent = '#';
+    a.setAttribute('aria-label', 'Lien vers cette section'); h.appendChild(a);
+    // « Copier le lien » : bouton icône SANS TEXTE (le script lit h.textContent pour le plan, le fil d'Ariane, la recherche)
+    var c = document.createElement('button'), titre = 'Copier le lien vers cette section';
+    c.type = 'button'; c.className = 'copie-lien'; c.title = titre; c.setAttribute('aria-label', titre);
+    c.innerHTML = '<svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.5a2.5 2.5 0 0 0 3.5 0l2.5-2.5a2.5 2.5 0 0 0-3.5-3.5l-.8.8M9.5 6.5a2.5 2.5 0 0 0-3.5 0L3.5 9A2.5 2.5 0 0 0 7 12.5l.8-.8"/></svg>';
+    c.addEventListener('click', function () {
+      var lien = location.href.split('#')[0] + '#' + h.id;
+      function fait() {
+        c.classList.add('copie'); c.title = 'Lien copié';
+        setTimeout(function () { c.classList.remove('copie'); c.title = titre; }, 1400);
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(lien).then(fait, function () {}); return; }
+        var t = document.createElement('textarea'); t.value = lien; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+        document.body.appendChild(t); t.select(); var ok = document.execCommand && document.execCommand('copy'); document.body.removeChild(t);
+        if (ok) fait();
+      } catch (e) {}
+    });
+    h.appendChild(c);
+  });
+
+  /* ---- onglets de fichiers (bloc « onglets ») : tablist ARIA, tabindex itinérant, flèches, Début / Fin */
+  contenu.querySelectorAll('.onglets-code').forEach(function (g) {
+    var tabs = Array.prototype.slice.call(g.querySelectorAll('[role="tab"]'));
+    function choisirOnglet(i, focus) {
+      tabs.forEach(function (t, k) {
+        var actif = k === i, p = document.getElementById(t.getAttribute('aria-controls'));
+        t.setAttribute('aria-selected', actif ? 'true' : 'false'); t.tabIndex = actif ? 0 : -1;
+        if (p) p.hidden = !actif;
+      });
+      if (focus) tabs[i].focus();
+    }
+    tabs.forEach(function (t, i) {
+      t.addEventListener('click', function () { choisirOnglet(i, false); });
+      t.addEventListener('keydown', function (e) {
+        var n = e.key === 'ArrowRight' ? (i + 1) % tabs.length : e.key === 'ArrowLeft' ? (i + tabs.length - 1) % tabs.length
+          : e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : -1;
+        if (n < 0) return; e.preventDefault(); choisirOnglet(n, true);
+      });
+    });
+  });
+  contenu.querySelectorAll('figure.code').forEach(function (f) {
+    // barre de titre : légende (fichier), langue, bouton « Copier »
+    var cap = f.querySelector(':scope > figcaption'), b = document.createElement('button');
+    if (!cap) { cap = document.createElement('figcaption'); f.insertBefore(cap, f.firstChild); }
+    else { var l = document.createElement('span'); l.className = 'legende'; while (cap.firstChild) l.appendChild(cap.firstChild); cap.appendChild(l); }
+    if (f.dataset.langue) { var s = document.createElement('span'); s.className = 'langue'; s.textContent = f.dataset.langue; cap.insertBefore(s, cap.firstChild); }
+    b.type = 'button'; b.className = 'copier'; b.textContent = 'Copier';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(f.querySelector('code').innerText).then(function () {
+        b.textContent = 'Copié'; setTimeout(function () { b.textContent = 'Copier'; }, 1200);
+      });
+    });
+    cap.appendChild(b);
+  });
+
+  /* ---- surtitre numéroté de chaque chapitre, et cartes « partie précédente / suivante » en bas de partie */
+  var parties = Array.prototype.slice.call(contenu.querySelectorAll('section.partie'));
+  function deux(n) { return (n < 10 ? '0' : '') + n; }
+  function nomPartie(s) { var h = s.querySelector(':scope > h1'); return h ? h.textContent.replace(/#$/, '').trim() : ''; }
+  parties.forEach(function (s, i) {
+    var nom = nomPartie(s).replace(/^\d+\.\s*/, '');
+    s.querySelectorAll('h2[id]').forEach(function (h, k) { h.dataset.sur = deux(i + 1) + '.' + deux(k + 1) + ' // ' + nom; });
+    if (parties.length < 2) return;
+    var nav = document.createElement('nav'); nav.className = 'suite'; nav.setAttribute('aria-label', 'Partie précédente et suivante');
+    [[parties[i - 1], 'precedente', '← Précédent'], [parties[i + 1], 'suivante', 'Suivant →']].forEach(function (x) {
+      var h = x[0] && x[0].querySelector(':scope > h1[id]'); if (!h) return;
+      var a = document.createElement('a'), sm = document.createElement('small'), b = document.createElement('b');
+      a.className = x[1]; a.href = '#' + h.id; sm.textContent = x[2]; b.textContent = nomPartie(x[0]);
+      a.appendChild(sm); a.appendChild(b); nav.appendChild(a);
+    });
+    s.appendChild(nav);
+  });
+
+  /* ---- zoom sur les captures */
+  var dlg = document.getElementById('zoom'), zimg = document.getElementById('zoomimg');
+  contenu.addEventListener('click', function (e) {
+    var b = e.target.closest('button.zoom'); if (!b) return;
+    zimg.src = b.querySelector('img').src; zimg.alt = b.getAttribute('aria-label');
+    if (dlg.showModal) dlg.showModal();
+  });
+  document.getElementById('fermer').addEventListener('click', function () { dlg.close(); });
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
+
+  /* ---- sommaire (partie, chapitre), fil d'Ariane et plan de la partie en cours (volet droit) */
+  var liens = {}, titres = Array.prototype.slice.call(contenu.querySelectorAll('section.partie h1[id], section.partie h2[id], section.partie h3[id]'));
+  document.querySelectorAll('#toc a').forEach(function (a) { liens[decodeURIComponent(a.getAttribute('href').slice(1))] = a; });
+  var fil = document.getElementById('fil'), plan = document.getElementById('plan'), rail = document.querySelector('aside.rail');
+  var racineFil = fil.textContent, courant, partieCourante, attente = false;
+  function texteDe(h) { return h.firstChild ? h.textContent.replace(/#$/, '').trim() : ''; }
+  function dessinerPlan(partie) {
+    plan.textContent = '';
+    partie.querySelectorAll('h2[id], h3[id]').forEach(function (h) {
+      var li = document.createElement('li'), a = document.createElement('a');
+      li.className = h.tagName === 'H3' ? 'n3' : 'n2'; a.href = '#' + h.id; a.textContent = texteDe(h);
+      li.appendChild(a); plan.appendChild(li);
+    });
+    rail.hidden = !plan.children.length;
+  }
+  function surDefilement() {
+    attente = false;
+    var k = -1;
+    for (var i = 0; i < titres.length; i++) { if (titres[i].getBoundingClientRect().top <= 96) k = i; else break; }
+    var h = titres[Math.max(k, 0)]; if (!h || h === courant) return; courant = h;
+    var h1 = null, h2 = null;
+    for (var n = Math.max(k, 0); n >= 0; n--) {
+      if (!h2 && titres[n].tagName === 'H2') h2 = titres[n];
+      if (titres[n].tagName === 'H1') { h1 = titres[n]; break; }
+    }
+    if (h2 && h1 && h2.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING) h2 = null;
+    var a = liens[(h2 || h1 || h).id] || (h1 && liens[h1.id]);
+    Object.keys(liens).forEach(function (id) { liens[id].classList.toggle('actif', liens[id] === a); });
+    document.querySelectorAll('#toc li.p').forEach(function (li) { li.classList.toggle('ouvert', !!a && li.contains(a)); });
+    if (a) { var r = a.getBoundingClientRect(), z = document.getElementById('toc').getBoundingClientRect();
+      if (r.top < z.top || r.bottom > z.bottom) a.scrollIntoView({ block: 'nearest' }); }
+    fil.textContent = '';
+    [racineFil, k < 0 ? null : h1 && texteDe(h1), k < 0 ? null : h2 && texteDe(h2)].forEach(function (x, n) {
+      if (!x) return;
+      if (n) { var sep = document.createElement('i'); sep.textContent = '/'; fil.appendChild(sep); }
+      var s = document.createElement('span'); s.textContent = x; fil.appendChild(s);
+    });
+    var partie = h.closest('section.partie');
+    if (partie !== partieCourante) { partieCourante = partie; dessinerPlan(partie); }
+    plan.querySelectorAll('a').forEach(function (x) { x.classList.toggle('actif', x.getAttribute('href') === '#' + h.id); });
+    var pa = plan.querySelector('a.actif'); if (pa) pa.scrollIntoView({ block: 'nearest' });
+  }
+  document.addEventListener('scroll', function () { if (!attente) { attente = true; requestAnimationFrame(surDefilement); } }, { passive: true });
+  if (titres.length) surDefilement(); else rail.hidden = true;
+  /* un schéma qui déborde de la colonne de texte (schemas-anim.js) passe sur le plan de droite : le plan s'efface
+     tant qu'ils se touchent */
+  var attenteRail = false;
+  function cederAuxSchemas() {
+    attenteRail = false;
+    var r = rail.getBoundingClientRect(), touche = false;
+    if (r.width) contenu.querySelectorAll('figure.schema.deborde').forEach(function (f) {
+      var b = f.getBoundingClientRect();
+      if (b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom) touche = true;
+    });
+    rail.classList.toggle('efface', touche);
+  }
+  function demanderRail() { if (!attenteRail) { attenteRail = true; requestAnimationFrame(cederAuxSchemas); } }
+  document.addEventListener('scroll', demanderRail, { passive: true });
+  document.addEventListener('schemas-places', demanderRail);
+
+  /* ---- téléphone : tiroir du sommaire */
+  document.getElementById('ouvrir').addEventListener('click', function () { nav.classList.toggle('ouvert'); });
+  nav.addEventListener('click', function (e) { if (e.target.tagName === 'A') nav.classList.remove('ouvert'); });
+
+{{SCHEMAS_JS}}  /* ---- recherche (Ctrl K) : palette au centre, liste des sections qui contiennent le texte */
+  function norm(s) { return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); }
+  // texte cherché d'un bloc : sans les numéros de ligne du code (gouttière « .nums », hors de <code>)
+  function texteCherche(el) {
+    if (!el.querySelector('.nums')) return el.textContent;
+    var c = el.cloneNode(true); c.querySelectorAll('.nums').forEach(function (n) { n.remove(); }); return c.textContent;
+  }
+  var index = [], chemin = { 1: '', 2: '' };
+  contenu.querySelectorAll('section.partie h1[id], section.partie h2[id], section.partie h3[id]').forEach(function (h) {
+    var niveau = +h.tagName[1], titre = h.firstChild ? h.textContent.replace(/#$/, '').trim() : '';
+    var t = '', el = h.nextElementSibling;
+    while (el && !/^H[1-3]$/.test(el.tagName)) { if (!el.matches('figure.schema, nav.suite, footer.pied')) t += ' ' + texteCherche(el); el = el.nextElementSibling; }
+    t = t.replace(/\s+/g, ' ').replace(/Copier/g, '').trim();
+    var ch = niveau === 1 ? '' : niveau === 2 ? chemin[1] : chemin[1] + ' › ' + chemin[2];
+    if (niveau < 3) chemin[niveau] = titre;
+    index.push({ h: h, titre: titre, chemin: ch, texte: t, nt: norm(titre), nx: norm(t) });
+  });
+  var pal = document.getElementById('palette'), champ = document.getElementById('recherche');
+  var liste = document.getElementById('resultats'), compte = document.getElementById('compte'), trouves = [], sel = 0, minuterie;
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function marquer(texte, q) {
+    var n = norm(texte), i = n.indexOf(q); if (i < 0) return esc(texte);
+    return esc(texte.slice(0, i)) + '<mark>' + esc(texte.slice(i, i + q.length)) + '</mark>' + esc(texte.slice(i + q.length));
+  }
+  function extrait(e, q) {
+    var i = e.nx.indexOf(q); if (i < 0) return esc(e.texte.slice(0, 140));
+    var d = Math.max(0, i - 50), morceau = e.texte.slice(d, i + q.length + 90);
+    return (d ? '… ' : '') + marquer(morceau, q);
+  }
+  var onglets = document.getElementById('onglets'), onglet = 'tout', tous = [];
+  var ONGLETS = [['tout', 'Tout'], ['titres', 'Titres'], ['texte', 'Texte']];
+  function garder(r) { return onglet === 'tout' || (onglet === 'titres') === r.titre; }
+  function peindreOnglets() {
+    onglets.innerHTML = tous.length ? ONGLETS.map(function (o) {
+      var n = o[0] === 'tout' ? tous.length : tous.filter(function (r) { return (o[0] === 'titres') === r.titre; }).length;
+      return '<button type="button" role="tab" data-o="' + o[0] + '" aria-pressed="' + (o[0] === onglet) + '">' + o[1] + ' <span>' + n + '</span></button>';
+    }).join('') : '';
+  }
+  function lister() {
+    var q = norm(champ.value.trim()); sel = 0;
+    trouves = tous.filter(garder);
+    compte.textContent = trouves.length + ' section(s)';
+    peindreOnglets();
+    if (!trouves.length) { liste.innerHTML = '<li class="vide">Aucun résultat pour « ' + esc(champ.value.trim()) + ' »' + (tous.length ? ' dans cet onglet.' : '.') + '</li>'; return; }
+    liste.innerHTML = trouves.slice(0, 40).map(function (r, k) {
+      return '<li role="option" data-k="' + k + '"' + (k === 0 ? ' class="sel"' : '') + '>' +
+        '<span class="ic" aria-hidden="true">' + (r.titre ? '#' : '¶') + '</span>' +
+        (r.e.chemin ? '<div class="chemin">' + esc(r.e.chemin) + '</div>' : '') +
+        '<div class="titre">' + marquer(r.e.titre, q) + '</div><div class="extrait">' + extrait(r.e, q) + '</div>' +
+        '<span class="ouvrir">Ouvrir <kbd>↵</kbd></span></li>';
+    }).join('');
+  }
+  function chercher() {
+    var q = norm(champ.value.trim());
+    if (q.length < 2) { tous = []; trouves = []; peindreOnglets(); liste.innerHTML = '<li class="vide">Tape au moins 2 lettres : un mot, une commande, un nom de fichier…</li>'; compte.textContent = ''; return; }
+    tous = index.map(function (e) {
+      var nb = e.nx.split(q).length - 1, dansTitre = e.nt.indexOf(q) >= 0;
+      return { e: e, titre: dansTitre, score: (dansTitre ? 1000 : 0) + nb };
+    }).filter(function (r) { return r.score > 0; }).sort(function (a, b) { return b.score - a.score; });
+    if (!tous.filter(garder).length) onglet = 'tout';
+    lister();
+  }
+  onglets.addEventListener('click', function (e) { var b = e.target.closest('button[data-o]'); if (b) { onglet = b.dataset.o; lister(); champ.focus(); } });
+  function choisir(k) {
+    sel = Math.max(0, Math.min(k, Math.min(trouves.length, 40) - 1));
+    liste.querySelectorAll('li[data-k]').forEach(function (li) { li.classList.toggle('sel', +li.dataset.k === sel); });
+    var li = liste.querySelector('li.sel'); if (li) li.scrollIntoView({ block: 'nearest' });
+  }
+  function ouvrirResultat(k) {
+    var r = trouves[k]; if (!r) return;
+    var q = norm(champ.value.trim()); pal.close();
+    // Va au premier endroit de la section qui contient le texte, et le surligne un instant
+    var h = r.e.h, el = h, cible = h;
+    while (el && (el === h || !/^H[1-3]$/.test(el.tagName))) {
+      if (norm(texteCherche(el)).indexOf(q) >= 0 && el !== h) { cible = el; break; }
+      el = el.nextElementSibling;
+    }
+    history.replaceState(null, '', '#' + h.id);
+    cible.scrollIntoView({ block: cible === h ? 'start' : 'center' });
+    cible.animate([{ background: 'var(--mark)' }, { background: 'transparent' }], { duration: 1600 });
+  }
+  function ouvrirPalette() { if (!pal.open) { pal.showModal(); champ.select(); chercher(); } }
+  document.getElementById('ouvrir-recherche').addEventListener('click', ouvrirPalette);
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); pal.open ? pal.close() : ouvrirPalette(); }
+    else if (e.key === '/' && !pal.open && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); ouvrirPalette(); }
+  });
+  champ.addEventListener('input', function () { clearTimeout(minuterie); minuterie = setTimeout(chercher, 120); });
+  champ.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); choisir(sel + 1); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); choisir(sel - 1); }
+    else if (e.key === 'Enter') { e.preventDefault(); ouvrirResultat(sel); }
+    else if (e.key === 'Tab' && tous.length) { e.preventDefault(); var n = ONGLETS.map(function (o) { return o[0]; }), d = e.shiftKey ? n.length - 1 : 1;
+      onglet = n[(n.indexOf(onglet) + d) % n.length]; lister(); }
+  });
+  liste.addEventListener('click', function (e) { var li = e.target.closest('li[data-k]'); if (li) ouvrirResultat(+li.dataset.k); });
+  liste.addEventListener('mousemove', function (e) { var li = e.target.closest('li[data-k]'); if (li && +li.dataset.k !== sel) choisir(+li.dataset.k); });
+  pal.addEventListener('click', function (e) { if (e.target === pal) pal.close(); });
+
+})();
+</script>
+</body>
+</html>

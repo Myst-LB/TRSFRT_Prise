@@ -1,0 +1,4 @@
+# Wiki généré par docs/wiki/gen.py (images intégrées) : pas de diff ligne à ligne
+docs/wiki.html -diff linguist-generated
+docs/wiki/schemas/*.svg -diff linguist-generated
+docs/wiki/etat.json linguist-generated

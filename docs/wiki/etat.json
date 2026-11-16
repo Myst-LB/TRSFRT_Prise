@@ -1,0 +1,177 @@
+{
+  "titre": "Wiki Changement Câblage",
+  "genere_le": "2026-11-16",
+  "docs_wiki": "3.4.0",
+  "derniere_session": "2026-11-16",
+  "a_valider": 3,
+  "etapes_ouvertes": 3,
+  "attention": 0,
+  "parties": 6,
+  "titres": [
+    {
+      "niveau": 1,
+      "id": "wiki-changement-câblage",
+      "texte": "Wiki Changement Câblage"
+    },
+    {
+      "niveau": 1,
+      "id": "1-présentation",
+      "texte": "1. Présentation"
+    },
+    {
+      "niveau": 2,
+      "id": "ce-que-fait-le-projet",
+      "texte": "Ce que fait le projet"
+    },
+    {
+      "niveau": 2,
+      "id": "contexte-et-décisions",
+      "texte": "Contexte et décisions"
+    },
+    {
+      "niveau": 2,
+      "id": "vue-densemble",
+      "texte": "Vue d'ensemble"
+    },
+    {
+      "niveau": 2,
+      "id": "contenu-du-dépôt",
+      "texte": "Contenu du dépôt"
+    },
+    {
+      "niveau": 1,
+      "id": "2-installation-et-exploitation",
+      "texte": "2. Installation et exploitation"
+    },
+    {
+      "niveau": 2,
+      "id": "préparer-un-projet",
+      "texte": "Préparer un projet"
+    },
+    {
+      "niveau": 2,
+      "id": "lancer-le-générateur",
+      "texte": "Lancer le générateur"
+    },
+    {
+      "niveau": 2,
+      "id": "dépannage",
+      "texte": "Dépannage"
+    },
+    {
+      "niveau": 2,
+      "id": "si-le-script-échoue-à-la-main",
+      "texte": "Si le script échoue : à la main"
+    },
+    {
+      "niveau": 2,
+      "id": "maintenance-dépendances-versions-vulnérabilités",
+      "texte": "Maintenance : dépendances, versions, vulnérabilités"
+    },
+    {
+      "niveau": 1,
+      "id": "3-utilisation",
+      "texte": "3. Utilisation"
+    },
+    {
+      "niveau": 2,
+      "id": "les-feuilles-du-classeur",
+      "texte": "Les feuilles du classeur"
+    },
+    {
+      "niveau": 2,
+      "id": "la-feuille-câblage",
+      "texte": "La feuille CÂBLAGE"
+    },
+    {
+      "niveau": 2,
+      "id": "la-feuille-changements-all-switch",
+      "texte": "La feuille Changements All Switch"
+    },
+    {
+      "niveau": 2,
+      "id": "la-colonne-poe-quel-port-prévoir",
+      "texte": "La colonne POE : quel port prévoir"
+    },
+    {
+      "niveau": 2,
+      "id": "numéro-de-prise-dans-la-description",
+      "texte": "Numéro de prise dans la description"
+    },
+    {
+      "niveau": 2,
+      "id": "hors-gabarit-et-doublons",
+      "texte": "Hors gabarit et doublons"
+    },
+    {
+      "niveau": 1,
+      "id": "4-développement",
+      "texte": "4. Développement"
+    },
+    {
+      "niveau": 2,
+      "id": "architecture",
+      "texte": "Architecture"
+    },
+    {
+      "niveau": 2,
+      "id": "disposition-des-colonnes-une-seule-source",
+      "texte": "Disposition des colonnes : une seule source"
+    },
+    {
+      "niveau": 2,
+      "id": "les-formules",
+      "texte": "Les formules"
+    },
+    {
+      "niveau": 2,
+      "id": "présentation-empruntée-au-gabarit",
+      "texte": "Présentation empruntée au gabarit"
+    },
+    {
+      "niveau": 2,
+      "id": "recettes-dajustement",
+      "texte": "Recettes d'ajustement"
+    },
+    {
+      "niveau": 1,
+      "id": "5-tests",
+      "texte": "5. Tests"
+    },
+    {
+      "niveau": 2,
+      "id": "lancer-les-tests",
+      "texte": "Lancer les tests"
+    },
+    {
+      "niveau": 2,
+      "id": "ce-qui-nest-pas-couvert",
+      "texte": "Ce qui n'est pas couvert"
+    },
+    {
+      "niveau": 1,
+      "id": "6-suivi-du-projet",
+      "texte": "6. Suivi du projet"
+    },
+    {
+      "niveau": 2,
+      "id": "passation-état-de-fin-de-session",
+      "texte": "Passation : état de fin de session"
+    },
+    {
+      "niveau": 3,
+      "id": "session-du-2026-11-16-poe-raccordement-wiki-à-reprendre-ici",
+      "texte": "Session du 2026-11-16 : POE+, raccordement, wiki, à reprendre ici"
+    },
+    {
+      "niveau": 2,
+      "id": "prochaines-étapes",
+      "texte": "Prochaines étapes"
+    },
+    {
+      "niveau": 2,
+      "id": "régénérer-ce-wiki",
+      "texte": "Régénérer ce wiki"
+    }
+  ]
+}
