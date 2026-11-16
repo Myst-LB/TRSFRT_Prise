@@ -11,3 +11,8 @@
 
 # Config file: never commit it
 *.txt
+
+Génie/
+# Windows system files
+desktop.ini
+Thumbs.db
