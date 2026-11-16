@@ -272,14 +272,60 @@ def lire_poe(chemin):
     return res, entete
 
 
+# Plafond d'un port PoE « classique » (802.3af), mesure cote switch : c'est
+# ce que la colonne Power du « show power inline » affiche. Au-dela, il faut
+# du PoE+ (802.3at, 30 W).
+POE_AF_MAX_W = 15.4
+
+# Classes 802.3 qui depassent le 802.3af : 4 = PoE+, 5-8 = 802.3bt (UPOE).
+CLASSES_POE_PLUS = {"4", "5", "6", "7", "8"}
+
+# Equipements dont la conso de POINTE depasse le PoE classique, meme si la
+# mesure du moment est basse (AP au repos, radio eteinte, camera PTZ a
+# l'arret...). Reconnus sur la colonne Device du « show power inline ».
+#   AIR-AP2802I-A-K9, AIR-CAP3702I, C9115AXI, C9120AXE, C9130AXI, CW9166I,
+#   MR46, Meraki, AP ...
+RE_DEVICE_POE_PLUS = re.compile(
+    r"AIR-C?AP|\bC91[0-9]{2}AX|\bCW91[0-9]{2}|\bMR\d{2}|Meraki"
+    r"|\bAP\b|access.?point|PTZ",
+    re.I)
+
+
+def besoin_poe_plus(info, description=None):
+    """Vrai si le port doit etre rebranche sur du PoE+ plutot que du PoE.
+
+    Trois raisons, une seule suffit :
+      1. la conso relevee depasse ce que fournit le PoE classique (15,4 W) ;
+      2. l'equipement a negocie une classe PoE+ ou plus (classe 4 a 8) -- il
+         annonce lui-meme qu'il peut monter au-dela de 15,4 W ;
+      3. l'equipement est d'un type connu pour ses pointes au-dela du PoE
+         classique : AP (marqueur « (AP) » de la description, ou modele
+         reconnu dans la colonne Device), camera PTZ...
+    La mesure n'est qu'un instantane : un AP releve a 9 W pendant la nuit
+    tirera 25 W quand toutes ses radios seront actives.
+    """
+    if info["power"] > POE_AF_MAX_W:
+        return True
+    if str(info.get("classe", "")).strip() in CLASSES_POE_PLUS:
+        return True
+    if est_ap(description):
+        return True
+    return bool(RE_DEVICE_POE_PLUS.search(info.get("device") or ""))
+
+
 def etat_poe(info, description=None):
-    """Colonne POE du classeur : POE si le port debite du courant, sinon NON-POE.
+    """Colonne POE du classeur : POE+ / POE si le port debite du courant,
+    sinon NON-POE.
 
     C'est une CONSIGNE DE BRASSAGE, pas une propriete de la prise. Elle dit au
     technicien sur quel type de port rebrancher : pas de jus sur l'ancien port
     -> pas besoin de PoE sur le nouveau. C'est pour ca que « Power = 0 » donne
     NON-POE meme quand le port est capable de PoE (Max = 30 W) : la question
     n'est pas « ce port supporte-t-il le PoE », mais « faut-il du PoE ici ».
+
+    Quand le port debite, POE+ si l'equipement consomme -- ou peut consommer
+    en pointe -- plus que le PoE classique (voir besoin_poe_plus), POE sinon.
+    Les AP, autrefois marques « POE (AP) », tombent ainsi en POE+.
 
     Ne pas la transformer en trois etats sous pretexte que « Power = 0 » ne
     distingue pas « rien de branche » de « equipement non-PoE » : cette
@@ -294,4 +340,4 @@ def etat_poe(info, description=None):
     """
     if not info or info["power"] <= 0:
         return "NON-POE"
-    return "POE (AP)" if est_ap(description) else "POE"
+    return "POE+" if besoin_poe_plus(info, description) else "POE"

@@ -563,7 +563,7 @@ def largeurs_changements(sw, ports, blocs):
         2: largeur(ports),
         3: largeur([p["admin"] for p in poe if p] + ["Admin"]),
         4: largeur(["Anc. Prise"]),
-        5: largeur(["NON-POE", "POE"] + ["POE"]),
+        5: largeur(["NON-POE", "POE+", "POE"]),
         6: largeur([p["device"] for p in poe if p] + ["Device"]),
         7: largeur(lignes_cfg, mini=20.0, maxi=48.0),
         8: largeur(["Nouv. Interface"]),
