@@ -49,16 +49,31 @@ from xlsx import Feuille, form, num, txt, vide
 
 RESERVE_DEFAUT = 50          # lignes vides en fin de feuille CABLAGE
 GABARIT_DEFAUT = "Template.xlsx"   # source de la presentation
-LARGEUR_COL_SWITCH = "28"    # colonnes A et E : « C1-3124-9201A (Technicien) »
-# La feuille CABLAGE compte 10 colonnes, le gabarit n'en decrit que 9 : la
-# colonne « Nouv. Switch » (E) est nouvelle. Ce tableau dit, pour chaque
-# colonne produite, de quelle colonne du gabarit reprendre largeur et style.
-# E emprunte a la colonne 5 du gabarit, celle devant laquelle elle s'insere.
-# « Commentaire » (11), absent du gabarit lui aussi, reprend la colonne Etat.
-CAB_COLONNES = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9,
-                11: 9}
-CAB_LARGEURS = {1: LARGEUR_COL_SWITCH, 3: "13", 5: LARGEUR_COL_SWITCH,
-                10: "13", 11: "40"}
+LARGEUR_COL_SWITCH = "28"    # « C1-3124-9201A (Technicien) »
+# Largeurs de CABLAGE, PAR NOM D'EN-TETE : les positions se deduisent de
+# F.CAB_ENTETES. Les anciennes tables etaient indexees par numero de colonne ;
+# chaque colonne inseree (Local Switch, Interface, Description) decalait toutes
+# les largeurs d'un cran et laissait les dernieres colonnes sans largeur.
+# CAB_DEPUIS_GABARIT : colonne du gabarit (9 colonnes) dont on reprend la
+# largeur. CAB_LARGEURS_FIXES : largeur imposee, prioritaire.
+CAB_DEPUIS_GABARIT = {"Anc. Prise": 2, "Nouv. Prise": 4, "Nouv. Interface": 5,
+                      "POE": 6, "Nouv. Locale": 7, "VOCATION": 8}
+CAB_LARGEURS_FIXES = {"Local Switch": "11", "Anc. Switch": LARGEUR_COL_SWITCH,
+                      "Interface": "11", "Description": "30",
+                      "Anc. Locale": "13", "Nouv. Switch": LARGEUR_COL_SWITCH,
+                      "État": "13", "Commentaire": "40"}
+assert set(CAB_DEPUIS_GABARIT) | set(CAB_LARGEURS_FIXES) == set(F.CAB_ENTETES), \
+    "chaque colonne de CABLAGE doit avoir une largeur"
+
+
+def _par_position(par_nom, entetes):
+    """{nom d'en-tete: v} -> {numero de colonne (1 = A): v}."""
+    return {entetes.index(nom) + 1: v for nom, v in par_nom.items()}
+
+
+CAB_COLONNES = _par_position(
+    dict({nom: 1 for nom in F.CAB_ENTETES}, **CAB_DEPUIS_GABARIT), F.CAB_ENTETES)
+CAB_LARGEURS = _par_position(CAB_LARGEURS_FIXES, F.CAB_ENTETES)
 # Les styles de cellule viennent de habillage.py, par nom de colonne.
 HAUTEUR_ENTETE_CAB = "30"    # en-tetes sur deux lignes (« Nouv. Interface »)
 HAUTEUR_LIGNE_CAB = "26"     # de la place pour annoter au crayon
@@ -66,17 +81,17 @@ HAUTEUR_GROUPE = "20"
 # Impression de CABLAGE : Lettre US (paperSize 1), portrait, echelle 69 %.
 # fitToHeight="0" du gabarit est retire : sans fitToPage il ne sert a rien.
 MISE_EN_PAGE_CAB = '<pageSetup paperSize="1" scale="69" orientation="portrait"/>'
-# Feuille Changements : 12 colonnes produites contre 15 dans le gabarit.
-# « Power » (7), « Class » (9) et « Max » (10) ont ete retirees, donc tout ce
-# qui suivait remonte. Rien n'est masque : le gabarit masquait Admin et Device,
-# or Device doit se lire.
+# Feuille Changements : 14 colonnes produites contre 15 dans le gabarit.
+# « Power », « Class » et « Max » ont ete retirees ; « Description override »
+# est nouvelle. Les largeurs reelles viennent de largeurs_changements() (par
+# nom d'en-tete) ; le gabarit ne sert plus que de repli. Rien n'est masque : le
+# gabarit masquait Admin et Device, or Device doit se lire.
 HAUTEUR_LIGNE_MONO = 12.0    # points par ligne de config en Consolas 9
 ETIQUETTE_HG = "— HORS GABARIT —"   # ligne de separation dans CABLAGE
 MARQUE_HG = "HORS GABARIT"
 MARQUE_DOUBLON = "DOUBLON"
 ETIQUETTE_GROUPE = "Local technique %s"
-CHG_COLONNES = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 7, 7: 10, 8: 11, 9: 12,
-                10: 13, 11: 13, 12: 14, 13: 15, 14: 15}
+CHG_COLONNES = {i: i for i in range(1, len(F.CHG_ENTETES) + 1)}
 # Seules valeurs admises en colonne « État » (liste deroulante). Ce que le
 # script signale lui-meme -- DOUBLON, HORS GABARIT -- va en « Commentaire ».
 ETATS = ("Fait", "À faire", "À prog", "À désactiver", "À vérifier", "Non-fait",
@@ -558,23 +573,24 @@ def largeurs_changements(sw, ports, blocs):
     """
     lignes_cfg = [l for bloc in blocs.values() for l in bloc]
     poe = [sw.poe.get(p) for p in ports]
-    return {
-        1: largeur([sw.nom]),
-        2: largeur(ports),
-        3: largeur([p["admin"] for p in poe if p] + ["Admin"]),
-        4: largeur(["Anc. Prise"]),
-        5: largeur(["NON-POE", "POE+", "POE"]),
-        6: largeur([p["device"] for p in poe if p] + ["Device"]),
-        7: largeur(lignes_cfg, mini=20.0, maxi=48.0),
-        8: largeur(["Nouv. Interface"]),
-        9: largeur(["Local", "C1-0000-00"]),
-        10: largeur(["Nouv. Prise"]),
-        11: largeur(["Description override", "C1-0000-00_P0000 (xxxx)"]),
-        12: largeur(lignes_cfg, mini=20.0, maxi=48.0),
-        13: largeur(["État"] + list(ETATS)),
-        14: largeur(["Commentaire", "DOUBLON C1-0000-9200A Gi1/0/48"],
+    return _par_position({
+        "Switch": largeur([sw.nom]),
+        "Interface": largeur(ports),
+        "Admin": largeur([p["admin"] for p in poe if p] + ["Admin"]),
+        "Anc. Prise": largeur(["Anc. Prise"]),
+        "POE": largeur(["NON-POE", "POE+", "POE"]),
+        "Device": largeur([p["device"] for p in poe if p] + ["Device"]),
+        "Config": largeur(lignes_cfg, mini=20.0, maxi=48.0),
+        "Nouv. Interface": largeur(["Nouv. Interface"]),
+        "Local": largeur(["Local", "C1-0000-00"]),
+        "Nouv. Prise": largeur(["Nouv. Prise"]),
+        "Description override": largeur(["Description override",
+                                         "C1-0000-00_P0000 (xxxx)"]),
+        "New Config": largeur(lignes_cfg, mini=20.0, maxi=48.0),
+        "État": largeur(["État"] + list(ETATS)),
+        "Commentaire": largeur(["Commentaire", "DOUBLON C1-0000-9200A Gi1/0/48"],
                     maxi=34.0),
-    }
+    }, F.CHG_ENTETES)
 
 
 def hauteur_bloc(bloc):
@@ -592,7 +608,7 @@ def hauteur_bloc(bloc):
 
 
 def feuille_changements(nom, switchs, cfg_de_switch, cab, dernier_cab, modele,
-                        hab, hors_gabarit=()):
+                        hab):
     """Une seule feuille Changements : les ports de tous les switchs, a la suite.
 
     Chaque ligne vise la feuille de config de SON switch, et les switchs se
@@ -617,8 +633,11 @@ def feuille_changements(nom, switchs, cfg_de_switch, cab, dernier_cab, modele,
     f.ajouter([txt(e, hab.chg_entete[e]) for e in F.CHG_ENTETES])
     r = 1
     for sw in switchs:
+        # Les ports hors gabarit n'ont rien de particulier ici : la recherche
+        # se fait par port (switch + interface), pas par numero de prise, donc
+        # leurs Etat et Commentaire remontent de CABLAGE comme les autres.
         r = ajouter_ports(f, sw, cfg_de_switch[sw.nom], cab, dernier_cab,
-                          hab, hors_gabarit, r)
+                          hab, r)
     mef_suivi(f, hab, F.CHG, 2)
     return f
 
@@ -631,19 +650,13 @@ def anc_prise(interface, style):
     return num(p, style) if isinstance(p, int) else txt(p, style)
 
 
-def ajouter_ports(f, sw, nom_cfg, cab, dernier_cab, hab, hors_gabarit=(),
-                  r=1):
+def ajouter_ports(f, sw, nom_cfg, cab, dernier_cab, hab, r=1):
     """Ajoute a `f` une ligne par port de `sw`, a la suite de la ligne `r`.
 
     Renvoie le numero de la derniere ligne ecrite.
     """
     st = lambda gen: hab.chg_donnee[F.CHG_ENTETES[gen - 1]]
     ports = ports_du_switch(sw)
-    # Ces ports n'ont pas de numero de prise, donc aucun VLOOKUP ne peut les
-    # relier a CABLAGE. Commentaire porte la marque en clair (le port est ainsi
-    # signale des deux cotes) et Etat devient une saisie, faute de quoi la
-    # formule ne rendrait que du vide.
-    marques = {it.abrege for s, it in hors_gabarit if s is sw}
     blocs = {it.abrege: it.lignes for it in sw.interfaces}
     interfaces = {it.abrege: it for it in sw.interfaces}
     nlig = max(len(sw.lignes), 1)
@@ -921,7 +934,7 @@ def construire(nom_projet, switchs, reserve, gab, sauts=True):
                                           nom_projet),
                 feuille_changements(
         chg_tous, switchs, cfg_de_switch, cab, dernier_cab, gab.changements,
-        gab.habillage, hors_gabarit),
+        gab.habillage),
                 feuille_copie(copie, switchs, chg_de_switch, gab.habillage,
                               gab.mono)]
     for sw in switchs:

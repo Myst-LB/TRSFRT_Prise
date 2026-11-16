@@ -223,7 +223,8 @@ chacune **nomme l'autre port** (`DOUBLON Z7-1920-2962B Gi1/0/1`). Écarter la se
 - **Aucune lettre de colonne en dur** dans une formule : tout vient de `CAB` / `CHG`, construits depuis
   `CAB_ENTETES` / `CHG_ENTETES`. Les colonnes ont bougé plusieurs fois ; une lettre oubliée donnait un classeur qui
   s'ouvre sans erreur et affiche des valeurs fausses. Déplacer une colonne = éditer la liste d'en-têtes, la
-  déclarer dans `habillage.py`, revoir `CAB_COLONNES` / `CHG_COLONNES` (largeurs du gabarit).
+  déclarer dans `habillage.py`, lui donner une largeur **par nom** (`CAB_DEPUIS_GABARIT` / `CAB_LARGEURS_FIXES`,
+  `largeurs_changements()`) : un `assert` à l'import refuse une colonne de `CÂBLAGE` sans largeur.
 - **Lignes `!` et indentation des configs** : `CHG_J` fait un `MATCH("interface " & …)` exact puis cherche le `!`.
   `lire_config()` ne normalise que les fins de ligne.
 - **Table d'abréviations** (`Gi` → `GigabitEthernet`…) en deux copies : `analyse.ABREGES` et les `XLOOKUP` de
@@ -256,16 +257,12 @@ cherche en outre par **port** et non plus par numéro de prise (l'ancienne extra
 Excel du poste de dev : **2019 LTSC**, sans `LET` ni `TEXTSPLIT` (`#NOM?` partout, classeur d'origine compris). Le
 calcul ne se valide que sur M365 / Excel Online. Validable ici : ouverture sans réparation, structure, formules
 conservées mot pour mot, références de feuille vers le bon switch (paire piégeuse `C1-3000-6984` /
-`C1-3000-6984A`). La suite `tests/` ne couvre aujourd'hui que la règle POE, `lire_poe()` et la parité des abréviations.
+`C1-3000-6984A`). La suite `tests/` couvre la règle POE, `lire_poe()`, la parité des abréviations et une génération
+complète sur un projet fictif (`test_generation.py` : feuilles, largeurs de toutes les colonnes, valeurs POE).
 
 ## Prochaines étapes
 
-- [ ] Test de bout en bout du générateur sur un projet fictif (`--racine` vers un dossier temporaire) : structure
-      des feuilles, valeurs POE, références de feuille. Fait à la main le 2026-11-16 (sortie correcte), pas encore
-      dans la suite.
-- [ ] `CAB_COLONNES` ne couvre que 11 colonnes sur 14 (largeurs du gabarit) et son commentaire parle encore de
-      « 10 colonnes » ; idem le commentaire de `CHG_COLONNES` (« 12 colonnes »). À vérifier sur un classeur produit.
-- [ ] Variable `marques` de `feuille_changements()` calculée mais plus utilisée depuis la recherche par port.
-- [ ] Retirer `__pycache__/` du dépôt et l'ajouter au `.gitignore`.
+- [ ] `tests/test_generation.py` : ajouter la vérification croisée des références de feuille (chaque formule POE
+      vise les lignes de son switch), avec la paire piégeuse `…-6984` / `…-6984A` en fictif.
 - [ ] Wiki (`docs-wiki`) : y déplacer les explications longues de ce fichier.
 - [ ] Ajouter le projet à `Hub/projets.json` (dépôt `Myst-LB/Hub`, `METHODE.md` § 4.6).

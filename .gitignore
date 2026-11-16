@@ -18,3 +18,7 @@ desktop.ini
 Thumbs.db
 # Archives
 cab.zip
+
+# Cache Python
+__pycache__/
+*.pyc
