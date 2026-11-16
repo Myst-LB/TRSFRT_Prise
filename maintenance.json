@@ -1,0 +1,6 @@
+{
+  "python": "3 (testé sous 3.13 ; version minimale non mesurée)",
+  "dependances": [],
+  "outils": [{"nom": "Excel M365 / Excel Online", "role": "seul Excel qui calcule les formules LET / TEXTSPLIT du classeur produit"}],
+  "notes": "Bibliothèque standard uniquement ; aucune dépendance à installer. openpyxl volontairement absent."
+}
