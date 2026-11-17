@@ -28,7 +28,7 @@ règles métier, partie 4 = développement). Pas de plan ni de passation sépar�
 
 ## Branche et livraison
 
-- Branche : celle que fixe la session ; sinon une branche par sujet, fusion dans `main`.
+- Branche : celle que fixe la session ; sinon une branche par sujet, fusion dans `master` (branche par défaut ; pas de `main`).
 - Tests : `python -m unittest discover -s tests -v` → compter (27 tests, 27 passés, 0 sauté au 2026-11-16).
 - Bilan des tests dans chaque message de commit ; wiki régénéré (`python docs/wiki/gen.py`, zéro « ATTENTION »).
 
